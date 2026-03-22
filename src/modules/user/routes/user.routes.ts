@@ -2,10 +2,12 @@ import { Router } from "express";
 import { container } from "tsyringe";
 import { UserController } from "../controllers/user.controller";
 import { ensureAuthenticated } from "../../auth/middlewares/ensure-authenticated";
+import { validateRequestBodyDto } from "../../../shared/middleware/validation.middleware";
+import { RegisterRequestDto } from "../dtos/Request/register-request.dto";
 
 const userRoutes = Router();
 
-userRoutes.post("/register", (req, res, next) => {
+userRoutes.post("/register", validateRequestBodyDto(RegisterRequestDto), (req, res, next) => {
   const userController = container.resolve(UserController);
   return userController.register(req, res, next);
 });

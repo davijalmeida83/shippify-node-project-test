@@ -26,21 +26,13 @@ export class RegisterService {
   ) {}
 
   public async execute(input: RegisterRequestDto): Promise<AuthResponseDto> {
-    const name = input.name?.trim();
-    const email = input.email?.trim().toLowerCase();
+    const name = input.name.trim();
+    const email = input.email.trim().toLowerCase();
     const password = input.password;
-
-    if (!name || !email || !password) {
-      throw new AppError("name, email e password são obrigatórios", 400);
-    }
-
-    if (password.length < 6) {
-      throw new AppError("password deve ter no mínimo 6 caracteres", 400);
-    }
 
     const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) {
-      throw new AppError("usuário já existe", 400);
+      throw new AppError("User already exists", 400);
     }
 
     const hashedPassword = await hashPassword(password);

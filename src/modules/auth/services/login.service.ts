@@ -18,31 +18,27 @@ export class LoginService {
     @inject(USER_TOKENS.ToPublicUserService)
     private readonly toPublicUserService: ToPublicUserService,
 
-    @inject(AUTH_TOKENS.AuthService)
+    @inject(AUTH_TOKENS.TokenService)
     private readonly tokenService: TokenService
   ) {}
 
   public async execute(input: LoginRequestDto): Promise<AuthResponseDto> {
-    const email = input.email?.trim().toLowerCase();
+    const email = input.email.trim().toLowerCase();
     const password = input.password;
 
     try {
-      if (!email || !password) {
-        throw new AppError("email e password são obrigatórios", 400);
-      }
-
       const user = await this.userRepository.findByEmail(email);
       if (!user) {
-        throw new AppError("credenciais inválidas", 401);
+        throw new AppError("Invalid credentials", 401);
       }
 
       const isValidPassword = await verifyPassword(password, user.passwordHash);
       if (!isValidPassword) {
-        throw new AppError("credenciais inválidas", 401);
+        throw new AppError("Invalid credentials", 401);
       }
 
       const publicUser = this.toPublicUserService.execute(user);
-      const token = this.tokenService.generate(publicUser);
+      const token = this.tokenService.generateToken(user.id);
 
       return {
         token,
