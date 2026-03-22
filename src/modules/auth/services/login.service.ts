@@ -30,7 +30,7 @@ export class LoginService {
       throw new AppError("email e password são obrigatórios", 400);
     }
 
-    const user = this.userRepository.findByEmail(email);
+    const user = await this.userRepository.findByEmail(email);
     if (!user) {
       throw new AppError("credenciais inválidas", 401);
     }
