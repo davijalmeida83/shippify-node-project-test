@@ -26,26 +26,30 @@ export class LoginService {
     const email = input.email?.trim().toLowerCase();
     const password = input.password;
 
-    if (!email || !password) {
-      throw new AppError("email e password são obrigatórios", 400);
+    try {
+      if (!email || !password) {
+        throw new AppError("email e password são obrigatórios", 400);
+      }
+
+      const user = await this.userRepository.findByEmail(email);
+      if (!user) {
+        throw new AppError("credenciais inválidas", 401);
+      }
+
+      const isValidPassword = await verifyPassword(password, user.passwordHash);
+      if (!isValidPassword) {
+        throw new AppError("credenciais inválidas", 401);
+      }
+
+      const publicUser = this.toPublicUserService.execute(user);
+      const token = this.tokenService.generate(publicUser);
+
+      return {
+        token,
+        user: publicUser,
+      };
+    } catch (error) {
+      throw error;
     }
-
-    const user = await this.userRepository.findByEmail(email);
-    if (!user) {
-      throw new AppError("credenciais inválidas", 401);
-    }
-
-    const isValidPassword = await verifyPassword(password, user.passwordHash);
-    if (!isValidPassword) {
-      throw new AppError("credenciais inválidas", 401);
-    }
-
-    const publicUser = this.toPublicUserService.execute(user);
-    const token = this.tokenService.generate(publicUser);
-
-    return {
-      token,
-      user: publicUser,
-    };
   }
 }

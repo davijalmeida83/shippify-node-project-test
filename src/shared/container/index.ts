@@ -6,6 +6,10 @@ import { ToPublicUserService } from "../../modules/user/services/to-public-user.
 import { TokenService } from "../../modules/auth/services/token.service";
 import { AUTH_TOKENS } from "../../modules/auth/auth-tokens";
 import { AuthService } from "../../modules/auth/services/auth.service";
+import { initializeDataSource } from "../db/config/typeorm.config";
+import { AuditSubscriber } from '../db/subscribers/AuditSubscriber';
+
+initializeDataSource();
 
 container.registerSingleton<IUserRepository>(
   USER_TOKENS.UserRepository,
@@ -26,5 +30,8 @@ container.registerSingleton(
   AUTH_TOKENS.AuthService,
   AuthService
 );
+
+// Register the AuditSubscriber
+container.registerSingleton(AuditSubscriber);
 
 export { container };
