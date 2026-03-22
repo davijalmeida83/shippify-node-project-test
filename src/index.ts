@@ -1,16 +1,13 @@
-/// <reference path="./shared/types/express.d.ts" />
 import "reflect-metadata";
-import express, { NextFunction, Request, Response } from "express";
-import "./shared/container";
-import { AppError } from "./shared/errors/app-error";
+import express, { Request, Response } from "express";
+import { logger } from "./shared/utils/logger";
+import { initializeContainer } from "./shared/container";
 import routes from "./shared/routes";
 import { errorHandlerMiddleware } from "./shared/middleware/error-handler.middleware";
-import { initializeContainer } from "./shared/container";
 
-(async () => {
- 
+async function startServer() {
   await initializeContainer();
-  console.log("ContainerRegister inicializado com sucesso.");
+  logger.info("Container inicializado com sucesso");
 
   const app = express();
   const port = Number(process.env.PORT ?? 3000);
@@ -22,10 +19,14 @@ import { initializeContainer } from "./shared/container";
   });
 
   app.use(routes);
-
   app.use(errorHandlerMiddleware);
 
   app.listen(port, () => {
-    console.log(`API rodando em http://localhost:${port}`);
+    logger.info(`API rodando em http://localhost:${port}`);
   });
-})();
+}
+
+startServer().catch(error => {
+  logger.error("Erro ao iniciar servidor:", error);
+  process.exit(1);
+});
