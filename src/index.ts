@@ -1,23 +1,31 @@
+/// <reference path="./shared/types/express.d.ts" />
 import "reflect-metadata";
 import express, { NextFunction, Request, Response } from "express";
 import "./shared/container";
 import { AppError } from "./shared/errors/app-error";
 import routes from "./shared/routes";
 import { errorHandlerMiddleware } from "./shared/middleware/error-handler.middleware";
+import { initializeContainer } from "./shared/container";
 
-const app = express();
-const port = Number(process.env.PORT ?? 3000);
+(async () => {
+ 
+  await initializeContainer();
+  console.log("ContainerRegister inicializado com sucesso.");
 
-app.use(express.json());
+  const app = express();
+  const port = Number(process.env.PORT ?? 3000);
 
-app.get("/health", (_req: Request, res: Response) => {
-  res.status(200).json({ status: "ok" });
-});
+  app.use(express.json());
 
-app.use(routes);
+  app.get("/health", (_req: Request, res: Response) => {
+    res.status(200).json({ status: "ok" });
+  });
 
-app.use(errorHandlerMiddleware);
+  app.use(routes);
 
-app.listen(port, () => {
-  console.log(`API rodando em http://localhost:${port}`);
-});
+  app.use(errorHandlerMiddleware);
+
+  app.listen(port, () => {
+    console.log(`API rodando em http://localhost:${port}`);
+  });
+})();

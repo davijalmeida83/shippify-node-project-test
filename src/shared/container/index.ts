@@ -9,29 +9,30 @@ import { AuthService } from "../../modules/auth/services/auth.service";
 import { initializeDataSource } from "../db/config/typeorm.config";
 import { AuditSubscriber } from '../db/subscribers/AuditSubscriber';
 
-initializeDataSource();
+export const initializeContainer = async () => {
+ 
+  await initializeDataSource();
 
-container.registerSingleton<IUserRepository>(
-  USER_TOKENS.UserRepository,
-  UserRepository
-);
+  container.registerSingleton<IUserRepository>(
+    USER_TOKENS.UserRepository,
+    UserRepository
+  );
 
-container.registerSingleton(
-  USER_TOKENS.ToPublicUserService,
-  ToPublicUserService
-);
+  container.registerSingleton(
+    USER_TOKENS.ToPublicUserService,
+    ToPublicUserService
+  ); 
 
-container.registerSingleton(
-  AUTH_TOKENS.TokenService,
-  TokenService
-);
+  container.registerSingleton(
+    AUTH_TOKENS.TokenService,
+    TokenService
+  ); 
 
-container.registerSingleton(
-  AUTH_TOKENS.AuthService,
-  AuthService
-);
+  container.registerSingleton(
+    AUTH_TOKENS.AuthService,
+    AuthService
+  ); 
 
-// Register the AuditSubscriber
-container.registerSingleton(AuditSubscriber);
+  container.registerSingleton(AuditSubscriber);
 
-export { container };
+};

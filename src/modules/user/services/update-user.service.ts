@@ -12,11 +12,14 @@ export class UpdateUserService {
   ) {}
 
   public async execute(id: string, updatedData: Partial<User>): Promise<User> {
-    const user = await this.userRepository.update(id, updatedData);
+    const user = await this.userRepository.findById(id);
 
     if (!user) {
       throw new AppError("User not found", 404);
     }
+
+    Object.assign(user, updatedData);
+    await this.userRepository.save(user);
 
     return user;
   }

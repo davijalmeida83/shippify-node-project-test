@@ -5,8 +5,6 @@ import { GetAllUsersService } from "../services/get-all-users.service";
 import { GetUserByIdService } from "../services/get-user-by-id.service";
 import { UpdateUserService } from "../services/update-user.service";
 import { DeleteUserService } from "../services/delete-user.service";
-import { IUserRepository } from "../repositories/interfaces/user-repository.interface";
-import { USER_TOKENS } from "../user-tokens";
 
 @injectable()
 class UserController {
@@ -47,7 +45,7 @@ class UserController {
 
   async getUserById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const user = await this.getUserByIdService.execute(id);
       res.status(200).json(user);
     } catch (error) {
@@ -57,7 +55,7 @@ class UserController {
 
   async updateUser(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const updatedData = req.body;
       const updatedUser = await this.updateUserService.execute(id, updatedData);
       res.status(200).json(updatedUser);
@@ -68,7 +66,7 @@ class UserController {
 
   async deleteUser(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       await this.deleteUserService.execute(id);
       res.status(204).send();
     } catch (error) {

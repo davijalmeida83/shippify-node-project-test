@@ -1,16 +1,23 @@
 import { injectable } from "tsyringe";
-import { Repository } from "typeorm";
 import { User } from "../domain/user";
 import { IUserRepository } from "./interfaces/user-repository.interface";
-import { AppDataSource } from "../../../shared/db/config/typeorm.config";
-
-const userRepository = AppDataSource.getRepository(User);
+import { BaseRepository } from "../../../shared/repositories/base.repository";
 
 @injectable()
-export class UserRepository extends Repository<User> implements IUserRepository {
+export class UserRepository extends BaseRepository<User> implements IUserRepository {
+  constructor() {
+    super(User);
+  }
 
   findByEmail(email: string): Promise<User | null> {
     return this.findOne({ where: { email } });
   }
 
+  findById(id: string): Promise<User | null> {
+    return this.findOne({ where: { id } });
+  }
+
+  findAll(): Promise<User[]> {
+    return this.find();
+  }
 }
