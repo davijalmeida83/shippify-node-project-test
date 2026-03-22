@@ -8,6 +8,7 @@ import { verifyPassword } from "../utils/password.util";
 import { TokenService } from "./token.service";
 import { ToPublicUserService } from "../../user/services/to-public-user.service";
 import { USER_TOKENS } from "../../user/user-tokens";
+import { logger } from "../../../shared/utils/logger";
 
 @injectable()
 export class LoginService {
@@ -23,6 +24,7 @@ export class LoginService {
   ) {}
 
   public async execute(input: LoginRequestDto): Promise<AuthResponseDto> {
+    logger.info(`[LoginService] Iniciando login para email: ${input.email}`);
     const email = input.email.trim().toLowerCase();
     const password = input.password;
 
@@ -37,9 +39,11 @@ export class LoginService {
         throw new AppError("Invalid credentials", 401);
       }
 
+      logger.info(`[LoginService] Gerando token...`);
       const publicUser = this.toPublicUserService.execute(user);
       const token = this.tokenService.generateToken(user.id);
 
+      logger.info(`[LoginService] ✓ Login concluído com sucesso`);
       return {
         token,
         user: publicUser,

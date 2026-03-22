@@ -12,8 +12,9 @@ class AuthController {
 
   async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      logger.info(`[AuthController] POST /login recebida`);
       const result = await this.loginService.execute(req.body);
-      logger.info(`[AuthController] Login realizado: ${result.user.email}`);
+      logger.info(`[AuthController] Retornando resposta de login`);
       res.status(200).json(result);
     } catch (error) {
       logger.error(`[AuthController] Erro no login:`, error);

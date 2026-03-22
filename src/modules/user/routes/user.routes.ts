@@ -4,6 +4,7 @@ import { UserController } from "../controllers/user.controller";
 import { ensureAuthenticated } from "../../auth/middlewares/ensure-authenticated";
 import { validateRequestBodyDto } from "../../../shared/middleware/validation.middleware";
 import { RegisterRequestDto } from "../dtos/Request/register-request.dto";
+import { UpdateUserRequestDto } from "../dtos/Request/update-user-request.dto";
 
 const userRoutes = Router();
 
@@ -37,6 +38,7 @@ userRoutes.get(
 userRoutes.put(
   "/:id",
   ensureAuthenticated,
+  validateRequestBodyDto(UpdateUserRequestDto),
   async (req, res, next) => {
     const userController = container.resolve(UserController);
     await userController.updateUser(req, res, next);

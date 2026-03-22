@@ -36,6 +36,7 @@ export class AuditSubscriber implements EntitySubscriberInterface {
       
       logger.info(`[AuditSubscriber] Salvando auditoria...`);
       await event.manager.save(AuditLog, auditLog);
+      logger.info(`[AuditSubscriber] ✓ Auditoria salva com sucesso`);
     } catch (error) {
       logger.error(`[AuditSubscriber] Erro ao salvar auditoria:`, error);
       throw error;

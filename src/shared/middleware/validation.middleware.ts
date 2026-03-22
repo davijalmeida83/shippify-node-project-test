@@ -8,7 +8,24 @@ export function validateRequestBodyDto(dtoClass: any) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       logger.info(`[Validation] Validando ${dtoClass.name}...`);
-      const dtoInstance = plainToInstance(dtoClass, req.body);
+      
+      // Descobrir campos permitidos transformando com excludeExtraneousValues
+      // e comparando quais campos foram mantidos
+      const testInstance = plainToInstance(dtoClass, req.body, {
+        excludeExtraneousValues: true,
+        exposeUnsetFields: false,
+      });
+      
+      const allowedFields = Object.keys(testInstance).filter(key => testInstance.hasOwnProperty(key));
+      const requestFields = Object.keys(req.body);
+      const forbiddenFields = requestFields.filter(field => !allowedFields.includes(field));
+      
+      if (forbiddenFields.length > 0) {
+        throw new AppError(`Forbidden field(s): ${forbiddenFields.join(', ')}`, 400);
+      }
+      
+      const dtoInstance = testInstance;
+      
       const errors = await validate(dtoInstance);
 
       if (errors.length > 0) {

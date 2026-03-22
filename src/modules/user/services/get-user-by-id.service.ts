@@ -4,6 +4,7 @@ import { USER_TOKENS } from "../user-tokens";
 import { PublicUserResponseDto } from "../dtos/Response/public-user-response.dto";
 import { AppError } from "../../../shared/errors/app-error";
 import { ToPublicUserService } from "./to-public-user.service";
+import { logger } from "../../../shared/utils/logger";
 
 @injectable()
 export class GetUserByIdService {
@@ -16,12 +17,14 @@ export class GetUserByIdService {
   ) {}
 
   public async execute(id: string): Promise<PublicUserResponseDto> {
+    logger.info(`[GetUserByIdService] Buscando usuário: ${id}`);
     const user = await this.userRepository.findById(id);
 
     if (!user) {
       throw new AppError("User not found", 404);
     }
 
+    logger.info(`[GetUserByIdService] ✓ Usuário encontrado`);
     return this.toPublicUserService.execute(user);
   }
 }

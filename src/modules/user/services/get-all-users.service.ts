@@ -3,6 +3,7 @@ import { IUserRepository } from "../repositories/interfaces/user-repository.inte
 import { USER_TOKENS } from "../user-tokens";
 import { PublicUserResponseDto } from "../dtos/Response/public-user-response.dto";
 import { ToPublicUserService } from "./to-public-user.service";
+import { logger } from "../../../shared/utils/logger";
 
 @injectable()
 export class GetAllUsersService {
@@ -15,7 +16,9 @@ export class GetAllUsersService {
   ) {}
 
   public async execute(): Promise<PublicUserResponseDto[]> {
+    logger.info(`[GetAllUsersService] Buscando todos os usuários...`);
     const users = await this.userRepository.findAll();
+    logger.info(`[GetAllUsersService] ✓ ${users.length} usuário(s) encontrado(s)`);
     return users.map(user => this.toPublicUserService.execute(user));
   }
 }
