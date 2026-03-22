@@ -14,7 +14,7 @@ export class TokenService {
         sub: userId,
       },
       secret,
-      { expiresIn: JWT_EXPIRES_IN }
+      { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions
     );
   }
 }
