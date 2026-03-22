@@ -1,0 +1,13 @@
+# Prefixo da API
+API_PREFIX=/shippify-api/v1
+
+# Configurações do Banco de Dados
+DB_HOST=localhost
+DB_PORT=3306
+DB_USERNAME=
+DB_PASSWORD=
+DB_NAME=shippify_db
+
+#Config JWT Privado
+JWT_PRIVATE_SECRET=
+JWT_PRIVATE_EXPIRES_IN=1h
