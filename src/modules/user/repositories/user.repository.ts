@@ -1,25 +1,13 @@
 import { injectable } from "tsyringe";
+import { Repository } from "typeorm";
 import { User } from "../domain/user";
 import { IUserRepository } from "./interfaces/user-repository.interface";
 
 @injectable()
-export class UserRepository implements IUserRepository {
-  private readonly usersByEmail = new Map<string, User>();
+export class UserRepository extends Repository<User> implements IUserRepository {
 
-  findByEmail(email: string): User | null {
-    const normalizedEmail = email.trim().toLowerCase();
-    return this.usersByEmail.get(normalizedEmail) ?? null;
+  findByEmail(email: string): Promise<User | null> {
+    return this.findOne({ where: { email } });
   }
 
-  create(user: User): User {
-    const normalizedEmail = user.email.trim().toLowerCase();
-    this.usersByEmail.set(normalizedEmail, {
-      ...user,
-      email: normalizedEmail,
-    });
-    return user;
-  }
 }
-
-// Este arquivo foi movido para o módulo 'user'.
-// Atualize os imports e referências para refletir a nova localização.
