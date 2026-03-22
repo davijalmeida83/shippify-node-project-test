@@ -7,29 +7,49 @@ import { RegisterRequestDto } from "../dtos/Request/register-request.dto";
 
 const userRoutes = Router();
 
-userRoutes.post("/register", validateRequestBodyDto(RegisterRequestDto), (req, res, next) => {
-  const userController = container.resolve(UserController);
-  return userController.register(req, res, next);
-});
+userRoutes.post(
+  "/register",
+  validateRequestBodyDto(RegisterRequestDto),
+  async (req, res, next) => {
+    const userController = container.resolve(UserController);
+    await userController.register(req, res, next);
+  }
+);
 
-userRoutes.get("/", ensureAuthenticated, (req, res, next) => {
-  const userController = container.resolve(UserController);
-  return userController.getAllUsers(req, res, next);
-});
+userRoutes.get(
+  "/",
+  ensureAuthenticated,
+  async (req, res, next) => {
+    const userController = container.resolve(UserController);
+    await userController.getAllUsers(req, res, next);
+  }
+);
 
-userRoutes.get("/:id", ensureAuthenticated, (req, res, next) => {
-  const userController = container.resolve(UserController);
-  return userController.getUserById(req, res, next);
-});
+userRoutes.get(
+  "/:id",
+  ensureAuthenticated,
+  async (req, res, next) => {
+    const userController = container.resolve(UserController);
+    await userController.getUserById(req, res, next);
+  }
+);
 
-userRoutes.put("/:id", ensureAuthenticated, (req, res, next) => {
-  const userController = container.resolve(UserController);
-  return userController.updateUser(req, res, next);
-});
+userRoutes.put(
+  "/:id",
+  ensureAuthenticated,
+  async (req, res, next) => {
+    const userController = container.resolve(UserController);
+    await userController.updateUser(req, res, next);
+  }
+);
 
-userRoutes.delete("/:id", ensureAuthenticated, (req, res, next) => {
-  const userController = container.resolve(UserController);
-  return userController.deleteUser(req, res, next);
-});
+userRoutes.delete(
+  "/:id",
+  ensureAuthenticated,
+  async (req, res, next) => {
+    const userController = container.resolve(UserController);
+    await userController.deleteUser(req, res, next);
+  }
+);
 
 export { userRoutes };

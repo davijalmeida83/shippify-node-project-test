@@ -10,7 +10,7 @@ import { ToPublicUserService } from "./to-public-user.service";
 import { RegisterRequestDto } from "../dtos/Request/register-request.dto";
 import { USER_TOKENS } from "../user-tokens";
 import { AUTH_TOKENS } from "../../auth/auth-tokens";
-import { User } from "../domain/user";
+import { logger } from "../../../shared/utils/logger";
 
 @injectable()
 export class RegisterService {
@@ -26,6 +26,8 @@ export class RegisterService {
   ) {}
 
   public async execute(input: RegisterRequestDto): Promise<AuthResponseDto> {
+    logger.info(`[RegisterService] Iniciando registro para email: ${input.email}`);
+    
     const name = input.name.trim();
     const email = input.email.trim().toLowerCase();
     const password = input.password;
@@ -37,6 +39,7 @@ export class RegisterService {
 
     const hashedPassword = await hashPassword(password);
       
+    logger.info(`[RegisterService] Criando usuário...`);
     const user = this.userRepository.create({
         id: crypto.randomUUID(),
         name,
@@ -45,9 +48,13 @@ export class RegisterService {
     });
 
     await this.userRepository.save(user);
-
-    const publicUser = this.toPublicUserService.execute(user); 
+    logger.info(`[RegisterService] ✓ Registro concluído com sucesso`);
+    
+    logger.info(`[RegisterService] Gerando token...`);
     const token = await this.tokenService.generateToken(user.id);
+    
+    logger.info(`[RegisterService] Convertendo para public user...`);
+    const publicUser = this.toPublicUserService.execute(user);
 
     return {
       token,

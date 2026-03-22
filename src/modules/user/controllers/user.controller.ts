@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { inject, injectable } from "tsyringe";
+import { logger } from "../../../shared/utils/logger";
 import { RegisterService } from "../services/register.service";
 import { GetAllUsersService } from "../services/get-all-users.service";
 import { GetUserByIdService } from "../services/get-user-by-id.service";
@@ -27,9 +28,12 @@ class UserController {
 
   async register(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      logger.info(`[UserController] POST /register recebida`);
       const result = await this.registerService.execute(req.body);
+      logger.info(`[UserController] Retornando resposta de registro`);
       res.status(201).json(result);
     } catch (error) {
+      logger.error(`[UserController] Erro no register:`, error);
       next(error);
     }
   }
@@ -39,6 +43,7 @@ class UserController {
       const users = await this.getAllUsersService.execute();
       res.status(200).json(users);
     } catch (error) {
+      logger.error(`[UserController] Erro no getAllUsers:`, error);
       next(error);
     }
   }

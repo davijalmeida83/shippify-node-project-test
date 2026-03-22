@@ -12,13 +12,13 @@ export class AuditLog {
   @Column()
     operation!: string; // Tipo de operação (ex: 'INSERT', 'UPDATE', 'DELETE')
 
-  @Column('json', { nullable: true })
-    oldData!: Record<string, any> | null; // Dados antes da alteração
+  @Column('longtext', { nullable: true })
+    oldData!: string | null; // Dados antes da alteração (JSON serializado)
 
-  @Column('json', { nullable: true })
-    newData!: Record<string, any> | null; // Dados após a alteração
+  @Column('longtext', { nullable: true })
+    newData!: string | null; // Dados após a alteração (JSON serializado)
 
-  @Column({ nullable: true })
+  @Column('varchar', { length: 255, nullable: true })
     user!: string | null; // Usuário responsável pela operação
 
   @CreateDateColumn()

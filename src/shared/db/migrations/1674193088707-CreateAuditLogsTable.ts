@@ -7,9 +7,9 @@ export class CreateAuditLogsTable1674193088707 implements MigrationInterface {
         id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
         entity VARCHAR(255) NOT NULL,
         operation VARCHAR(50) NOT NULL,
-        old_data JSON,
-        new_data JSON,
-        user VARCHAR(255),
+        oldData LONGTEXT NULL,
+        newData LONGTEXT NULL,
+        user VARCHAR(255) NULL,
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
