@@ -1,57 +1,142 @@
+import "reflect-metadata";
 import { LoginService } from "../../../../modules/auth/services/login.service";
 import { TokenService } from "../../../../modules/auth/services/token.service";
 import { ToPublicUserService } from "../../../../modules/user/services/to-public-user.service";
+import { IUserFinder } from "../../../../modules/user/repositories/interfaces/user-finder.interface";
 import { AppError } from "../../../../shared/errors/app-error";
+import { User } from "../../../../modules/user/domain/user";
+import * as passwordUtil from "../../../../modules/auth/utils/password.util";
+
+jest.mock("../../../../modules/auth/utils/password.util");
 
 describe("LoginService", () => {
-  let loginService: LoginService;
-  let mockUserRepository: any;
-  let mockTokenService: TokenService;
-  let mockToPublicUserService: ToPublicUserService;
+  let service: LoginService;
+  let userFinderMock: jest.Mocked<IUserFinder>;
+  let tokenServiceMock: jest.Mocked<TokenService>;
+  let toPublicUserServiceMock: jest.Mocked<ToPublicUserService>;
 
   beforeEach(() => {
-    mockUserRepository = {
+    userFinderMock = {
       findByEmail: jest.fn(),
+      findById: jest.fn(),
+      findAll: jest.fn(),
     };
 
-    mockTokenService = new TokenService();
-    mockToPublicUserService = new ToPublicUserService();
+    tokenServiceMock = {
+      generateToken: jest.fn(),
+      validateToken: jest.fn(),
+    } as any;
 
-    loginService = new LoginService(
-      mockUserRepository,
-      mockToPublicUserService,
-      mockTokenService
-    );
+    toPublicUserServiceMock = {
+      execute: jest.fn(),
+    } as any;
+
+    service = new LoginService(userFinderMock, toPublicUserServiceMock, tokenServiceMock);
   });
 
-  it("should throw an error if email or password is missing", async () => {
-    await expect(
-      loginService.execute({ email: "", password: "" })
-    ).rejects.toThrow(AppError);
-  });
+  describe("execute", () => {
+    const mockUser = {
+      id: "uuid-123",
+      name: "João Silva",
+      email: "joao@example.com",
+      passwordHash: "hashed-password",
+    } as User;
 
-  it("should throw an error if user is not found", async () => {
-    mockUserRepository.findByEmail.mockReturnValue(null);
+    const publicUser = {
+      id: "uuid-123",
+      name: "João Silva",
+      email: "joao@example.com",
+    };
 
-    await expect(
-      loginService.execute({ email: "test@example.com", password: "password" })
-    ).rejects.toThrow("credenciais inválidas");
-  });
+    it("deve fazer login com sucesso com credenciais válidas", async () => {
+      // Arrange
+      const input = {
+        email: "joao@example.com",
+        password: "senha123456",
+      };
 
-  it("should return a token and user for valid credentials", async () => {
-    mockUserRepository.findByEmail.mockReturnValue({
-      email: "test@example.com",
-      passwordHash: "hashedPassword",
+      userFinderMock.findByEmail.mockResolvedValue(mockUser);
+      (passwordUtil.verifyPassword as jest.Mock).mockResolvedValue(true);
+      tokenServiceMock.generateToken.mockReturnValue("jwt-token-123");
+      toPublicUserServiceMock.execute.mockReturnValue(publicUser);
+
+      // Act
+      const result = await service.execute(input);
+
+      // Assert
+      expect(result).toEqual({
+        token: "jwt-token-123",
+        user: publicUser,
+      });
+      expect(userFinderMock.findByEmail).toHaveBeenCalledWith("joao@example.com");
+      expect(passwordUtil.verifyPassword).toHaveBeenCalledWith("senha123456", mockUser.passwordHash);
     });
 
-    jest.spyOn(mockTokenService, "generateToken").mockReturnValue("token");
+    it("deve lançar erro se usuário não for encontrado", async () => {
+      // Arrange
+      const input = {
+        email: "inexistente@example.com",
+        password: "senha123456",
+      };
 
-    const result = await loginService.execute({
-      email: "test@example.com",
-      password: "password",
+      userFinderMock.findByEmail.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(service.execute(input)).rejects.toThrow(AppError);
+      await expect(service.execute(input)).rejects.toThrow("Invalid credentials");
     });
 
-    expect(result).toHaveProperty("token");
-    expect(result).toHaveProperty("user");
+    it("deve lançar erro se a senha for inválida", async () => {
+      // Arrange
+      const input = {
+        email: "joao@example.com",
+        password: "senha-errada",
+      };
+
+      userFinderMock.findByEmail.mockResolvedValue(mockUser);
+      (passwordUtil.verifyPassword as jest.Mock).mockResolvedValue(false);
+
+      // Act & Assert
+      await expect(service.execute(input)).rejects.toThrow(AppError);
+      await expect(service.execute(input)).rejects.toThrow("Invalid credentials");
+    });
+
+    it("deve normalizar email para lowercase", async () => {
+      // Arrange
+      const input = {
+        email: "JOAO@EXAMPLE.COM",
+        password: "senha123456",
+      };
+
+      userFinderMock.findByEmail.mockResolvedValue(mockUser);
+      (passwordUtil.verifyPassword as jest.Mock).mockResolvedValue(true);
+      tokenServiceMock.generateToken.mockReturnValue("token");
+      toPublicUserServiceMock.execute.mockReturnValue(publicUser);
+
+      // Act
+      await service.execute(input);
+
+      // Assert
+      expect(userFinderMock.findByEmail).toHaveBeenCalledWith("joao@example.com");
+    });
+
+    it("deve trimizar email", async () => {
+      // Arrange
+      const input = {
+        email: "  joao@example.com  ",
+        password: "senha123456",
+      };
+
+      userFinderMock.findByEmail.mockResolvedValue(mockUser);
+      (passwordUtil.verifyPassword as jest.Mock).mockResolvedValue(true);
+      tokenServiceMock.generateToken.mockReturnValue("token");
+      toPublicUserServiceMock.execute.mockReturnValue(publicUser);
+
+      // Act
+      await service.execute(input);
+
+      // Assert
+      expect(userFinderMock.findByEmail).toHaveBeenCalledWith("joao@example.com");
+    });
   });
 });

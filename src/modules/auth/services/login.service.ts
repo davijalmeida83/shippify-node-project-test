@@ -3,7 +3,7 @@ import { AppError } from "../../../shared/errors/app-error";
 import { LoginRequestDto } from "../dtos/Request/login-request.dto";
 import { AuthResponseDto } from "../dtos/Response/auth-response.dto";
 import { AUTH_TOKENS } from "../auth-tokens";
-import { IUserRepository } from "../../user/repositories/interfaces/user-repository.interface";
+import { IUserFinder } from "../../user/repositories/interfaces/user-finder.interface";
 import { verifyPassword } from "../utils/password.util";
 import { TokenService } from "./token.service";
 import { ToPublicUserService } from "../../user/services/to-public-user.service";
@@ -14,7 +14,7 @@ import { logger } from "../../../shared/utils/logger";
 export class LoginService {
   constructor(
     @inject(USER_TOKENS.UserRepository)
-    private readonly userRepository: IUserRepository,
+    private readonly userFinder: IUserFinder,
 
     @inject(USER_TOKENS.ToPublicUserService)
     private readonly toPublicUserService: ToPublicUserService,
@@ -29,7 +29,7 @@ export class LoginService {
     const password = input.password;
 
     try {
-      const user = await this.userRepository.findByEmail(email);
+      const user = await this.userFinder.findByEmail(email);
       if (!user) {
         throw new AppError("Invalid credentials", 401);
       }
