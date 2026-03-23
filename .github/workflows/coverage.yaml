@@ -92,18 +92,24 @@ jobs:
               table += `| ${folder} | ${stmt} | ${branches} | ${functions} | ${lines} |\n`;
             });
 
-            let issueNumber = null;
-            if (github.event_name === 'pull_request') {
-              issueNumber = context.issue.number;
-            } else if (github.event.workflow_run && github.event.workflow_run.pull_requests && github.event.workflow_run.pull_requests.length > 0) {
-              issueNumber = github.event.workflow_run.pull_requests[0].number;
-            }
-
-            if (issueNumber) {
-              await github.rest.issues.createComment({ issue_number: issueNumber, owner: context.repo.owner, repo: context.repo.repo, body: table });
-              console.log(`✅ Comentário postado no PR #${issueNumber}`);
-            } else {
-              console.log('⚠️  Não é possível postar comentário - contexto não é de PR');
+            try {
+              let issueNumber = null;
+              
+              if (github.event_name === 'pull_request' && context.issue && context.issue.number) {
+                issueNumber = context.issue.number;
+              } else if (github?.event?.workflow_run?.pull_requests?.[0]?.number) {
+                issueNumber = github.event.workflow_run.pull_requests[0].number;
+              }
+              
+              if (issueNumber) {
+                await github.rest.issues.createComment({ issue_number: issueNumber, owner: context.repo.owner, repo: context.repo.repo, body: table });
+                console.log(`✅ Comentário postado no PR #${issueNumber}`);
+              } else {
+                console.log(`ℹ️  Contexto: event_name=${github.event_name}, is_PR=${github.event_name === 'pull_request'}`);
+                console.log('⚠️  Não é possível postar comentário - não é um contexto de PR');
+              }
+            } catch (error) {
+              console.log('⚠️  Erro ao postar comentário:', error.message);
             }
 
       - name: Verificar vulnerabilidades
