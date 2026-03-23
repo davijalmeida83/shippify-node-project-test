@@ -8,9 +8,11 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: Configurar Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: "18"
       - name: Instalar dependências
@@ -20,12 +22,13 @@ jobs:
       - name: Gerar relatório de cobertura
         run: npm run test:coverage
       - name: Publicar relatório de cobertura
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/lcov.info
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: false
+          verbose: true
       - name: Verificar vulnerabilidades
         run: npm audit --audit-level=high
