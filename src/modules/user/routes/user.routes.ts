@@ -3,6 +3,7 @@ import { container } from "tsyringe";
 import { UserController } from "../controllers/user.controller";
 import { ensureAuthenticated } from "../../auth/middlewares/ensure-authenticated";
 import { validateRequestBodyDto } from "../../../shared/middleware/validation.middleware";
+import { creationRateLimiter, sensitiveRateLimiter } from "../../../shared/middleware/rate-limit.middleware";
 import { RegisterRequestDto } from "../dtos/Request/register-request.dto";
 import { UpdateUserRequestDto } from "../dtos/Request/update-user-request.dto";
 
@@ -10,6 +11,7 @@ const userRoutes = Router();
 
 userRoutes.post(
   "/register",
+  creationRateLimiter,
   validateRequestBodyDto(RegisterRequestDto),
   async (req, res, next) => {
     const userController = container.resolve(UserController);
@@ -38,6 +40,7 @@ userRoutes.get(
 userRoutes.put(
   "/:id",
   ensureAuthenticated,
+  sensitiveRateLimiter,
   validateRequestBodyDto(UpdateUserRequestDto),
   async (req, res, next) => {
     const userController = container.resolve(UserController);
@@ -48,6 +51,7 @@ userRoutes.put(
 userRoutes.delete(
   "/:id",
   ensureAuthenticated,
+  sensitiveRateLimiter,
   async (req, res, next) => {
     const userController = container.resolve(UserController);
     await userController.deleteUser(req, res, next);
