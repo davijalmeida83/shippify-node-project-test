@@ -60,16 +60,24 @@ jobs:
             const fs = require('fs');
             const coverage = JSON.parse(fs.readFileSync('./coverage/coverage-final.json', 'utf8'));
             let totalLines = 0, coveredLines = 0, totalFunctions = 0, coveredFunctions = 0, totalBranches = 0, coveredBranches = 0;
+            const filesCoverage = [];
             for (const file in coverage) {
+              if (!file.includes('middleware') && !file.includes('utils') && !file.includes('services')) continue;
               const fileCov = coverage[file];
-              if (fileCov.lines) Object.values(fileCov.lines).forEach(line => { totalLines++; if (line > 0) coveredLines++; });
-              if (fileCov.functions) Object.values(fileCov.functions).forEach(fn => { totalFunctions++; if (fn > 0) coveredFunctions++; });
-              if (fileCov.branches) Object.values(fileCov.branches).forEach(branch => { totalBranches++; if (branch > 0) coveredBranches++; });
+              let fileLines = 0, fileCoveredLines = 0, fileFunctions = 0, fileCoveredFunctions = 0, fileBranches = 0, fileCoveredBranches = 0;
+              if (fileCov.lines) Object.values(fileCov.lines).forEach(line => { fileLines++; totalLines++; if (line > 0) { fileCoveredLines++; coveredLines++; } });
+              if (fileCov.functions) Object.values(fileCov.functions).forEach(fn => { fileFunctions++; totalFunctions++; if (fn > 0) { fileCoveredFunctions++; coveredFunctions++; } });
+              if (fileCov.branches) Object.values(fileCov.branches).forEach(branch => { fileBranches++; totalBranches++; if (branch > 0) { fileCoveredBranches++; coveredBranches++; } });
+              const fname = file.replace(process.cwd() + '/', '').replace(/\\/g, '/');
+              const linePct = fileLines > 0 ? ((fileCoveredLines / fileLines) * 100).toFixed(0) : '0';
+              filesCoverage.push({ file: fname, lines: `${linePct}% (${fileCoveredLines}/${fileLines})`, functions: `${fileFunctions > 0 ? ((fileCoveredFunctions / fileFunctions) * 100).toFixed(0) : '0'}%`, branches: `${fileBranches > 0 ? ((fileCoveredBranches / fileBranches) * 100).toFixed(0) : '0'}%` });
             }
-            const linesCov = totalLines > 0 ? ((coveredLines / totalLines) * 100).toFixed(2) : 0;
-            const fnCov = totalFunctions > 0 ? ((coveredFunctions / totalFunctions) * 100).toFixed(2) : 0;
-            const brCov = totalBranches > 0 ? ((coveredBranches / totalBranches) * 100).toFixed(2) : 0;
-            const msg = `## 📊 Cobertura de Testes\n\n| Métrica | Cobertura |\n|---------|----------|\n| Linhas | ${linesCov}% |\n| Funções | ${fnCov}% |\n| Ramos | ${brCov}% |\n\n✅ Testes OK!`;
+            const linesCov = totalLines > 0 ? ((coveredLines / totalLines) * 100).toFixed(2) : '0';
+            const fnCov = totalFunctions > 0 ? ((coveredFunctions / totalFunctions) * 100).toFixed(2) : '0';
+            const brCov = totalBranches > 0 ? ((coveredBranches / totalBranches) * 100).toFixed(2) : '0';
+            let filesTable = '| Arquivo | Linhas | Funções | Ramos |\n|---------|--------|---------|-------|\n';
+            filesCoverage.sort((a, b) => a.file.localeCompare(b.file)).forEach(f => { filesTable += `| ${f.file} | ${f.lines} | ${f.functions} | ${f.branches} |\n`; });
+            const msg = `## 📊 Cobertura de Testes (Middlewares, Utils, Services)\n\n| Métrica | Cobertura |\n|---------|----------|\n| Linhas | ${linesCov}% (${coveredLines}/${totalLines}) |\n| Funções | ${fnCov}% (${coveredFunctions}/${totalFunctions}) |\n| Ramos | ${brCov}% (${coveredBranches}/${totalBranches}) |\n\n### 📁 Arquivos\n\n${filesTable}\n✅ Testes executados com sucesso!`;
             await github.rest.issues.createComment({ issue_number: context.issue.number, owner: context.repo.owner, repo: context.repo.repo, body: msg });
 
       - name: Verificar vulnerabilidades
