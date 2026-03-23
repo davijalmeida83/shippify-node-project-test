@@ -8,6 +8,8 @@ import { AppError } from "../../../shared/errors/app-error";
 import { ToPublicUserService } from "./to-public-user.service";
 import { User } from "../domain/user";
 import { logger } from "../../../shared/utils/logger";
+import { InvalidateCache } from "../../../shared/cache/decorators/cache.decorator";
+import { REDIS_CONFIG } from "../../../shared/config/redis.config";
 
 @injectable()
 export class UpdateUserService {
@@ -22,13 +24,7 @@ export class UpdateUserService {
     private readonly toPublicUserService: ToPublicUserService
   ) {}
 
-  /**
-   * Atualiza os dados de um usuário
-   * @param id Identificador único do usuário
-   * @param updatedData Dados a serem atualizados (nome e/ou email)
-   * @returns Dados públicos do usuário atualizado
-   * @throws AppError Se o usuário não existir ou email já estiver em uso
-   */
+  @InvalidateCache([REDIS_CONFIG.keyPrefix.userList, `${REDIS_CONFIG.keyPrefix.user}{{0}}`])
   public async execute(id: string, updatedData: UpdateUserRequestDto): Promise<PublicUserResponseDto> {
     logger.info(`[UpdateUserService] Atualizando usuário: ${id}`);
     const user = await this.userFinder.findById(id);

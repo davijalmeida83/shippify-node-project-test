@@ -17,11 +17,6 @@ export class GetAllUsersService {
     private readonly toPublicUserService: ToPublicUserService
   ) {}
 
-  /**
-   * Retorna todos os usuários do sistema em formato público
-   * Com cache de 15 minutos
-   * @returns Lista de usuários sem dados sensíveis
-   */
   @Cached({
     key: REDIS_CONFIG.keyPrefix.userList,
     ttl: REDIS_CONFIG.ttl.userList,

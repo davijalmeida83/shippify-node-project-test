@@ -29,6 +29,7 @@ export const initializeDataSource = async () => {
       isDataSourceInitialized = true;
     } catch (err) {
       logger.error("Erro durante a inicialização do DataSource", err);
+      throw err; // Relança o erro para impedir a inicialização da API
     }
   }
 };
