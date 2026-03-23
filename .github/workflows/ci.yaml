@@ -21,6 +21,16 @@ jobs:
         run: npm test
       - name: Gerar relatório de cobertura
         run: npm run test:coverage
+      - name: Verificar arquivo de cobertura
+        run: |
+          if [ -f ./coverage/lcov.info ]; then
+            echo "✅ Arquivo lcov.info encontrado"
+            ls -lh ./coverage/
+          else
+            echo "❌ Arquivo lcov.info NÃO encontrado"
+            find . -name "lcov.info" -o -name "coverage-final.json"
+            exit 1
+          fi
       - name: Publicar relatório de cobertura
         uses: codecov/codecov-action@v3
         with:
