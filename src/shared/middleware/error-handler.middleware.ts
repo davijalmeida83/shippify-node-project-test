@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { AppError } from "../errors/app-error";
+import { logger } from "../utils/logger";
 
 export function errorHandlerMiddleware(
   error: Error,
@@ -7,7 +8,7 @@ export function errorHandlerMiddleware(
   res: Response,
   next: NextFunction
 ) {
-  console.error("Erro capturado pelo errorHandlerMiddleware:", {
+  logger.error("Erro capturado pelo errorHandlerMiddleware:", {
     rota: req.originalUrl,
     metodo: req.method,
     corpo: req.body,

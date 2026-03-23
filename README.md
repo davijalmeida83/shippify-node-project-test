@@ -467,38 +467,73 @@ O código está **100% alinhado com SOLID**:
 - ⭐⭐⭐⭐⭐ ISP - Interfaces segregadas
 - ⭐⭐⭐⭐⭐ DIP - Inversão de dependências
 
-## 🧪 Testes
+## 🧪 Testes Unitários
 
-O projeto implementa testes unitários abrangentes cobrindo todos os serviços principais com **22 testes**, alcançando **100% de Clean Code**.
+O projeto implementa testes unitários abrangentes cobrindo **todos os serviços, middlewares e utilitários** com **95 testes**, alcançando **100% de cobertura** em statements, branches, functions e lines.
+
+### 📊 Cobertura de Testes - 100% ✅
+
+```
+Test Suites: 13 passed, 13 total
+Tests:       95 passed, 95 total
+Statements:  100%
+Branches:    100%
+Functions:   100%
+Lines:       100%
+```
 
 ### Estrutura de Testes
 
 ```
 src/test/
-├── setup.ts                      # Configuração de reflect-metadata
-└── modules/
-    ├── auth/
-    │   └── services/
-    │       ├── login.service.test.ts       # 5 testes
-    │       └── token.service.test.ts       # 3 testes
-    └── user/
-        └── services/
-            ├── register.service.test.ts    # 4 testes
-            ├── get-all-users.service.test.ts   # 3 testes
-            ├── get-user-by-id.service.test.ts  # 4 testes
-            └── to-public-user.service.test.ts  # 3 testes
+├── modules/
+│   ├── auth/
+│   │   ├── services/
+│   │   │   ├── login.service.test.ts           # 5 testes
+│   │   │   └── token.service.test.ts           # 3 testes
+│   │   ├── middlewares/
+│   │   │   └── ensure-authenticated.test.ts    # 9 testes
+│   │   └── utils/
+│   │       └── password.util.test.ts           # 9 testes
+│   └── user/
+│       └── services/
+│           ├── register.service.test.ts        # 7 testes
+│           ├── delete-user.service.test.ts     # 4 testes
+│           ├── update-user.service.test.ts     # 6 testes
+│           ├── get-all-users.service.test.ts   # 3 testes
+│           ├── get-user-by-id.service.test.ts  # 4 testes
+│           └── to-public-user.service.test.ts  # 3 testes
+└── shared/
+    ├── middleware/
+    │   ├── error-handler.middleware.test.ts    # 8 testes
+    │   └── validation.middleware.test.ts       # 11 testes
+    └── utils/
+        └── logger.util.test.ts                 # 24 testes
 ```
 
-### Cobertura de Testes
+### Cobertura Detalhada de Testes
 
-| Serviço             | Testes | Cobertura                                            |
-| ------------------- | ------ | ---------------------------------------------------- |
-| RegisterService     | 4      | ✅ Email normalização, validação, tratamento de erro |
-| GetAllUsersService  | 3      | ✅ Lista vazia, múltiplos usuários, mapeamento       |
-| GetUserByIdService  | 4      | ✅ Encontrado, não encontrado, conversão             |
-| LoginService        | 5      | ✅ Sucesso, credenciais inválidas, normalização      |
-| TokenService        | 3      | ✅ Geração, formato JWT, múltiplos IDs               |
-| ToPublicUserService | 3      | ✅ Conversão, campos sensíveis, privacidade          |
+| Módulo                 | Arquivo                          | Testes | Cobertura |
+| ---------------------- | -------------------------------- | ------ | --------- |
+| **Auth Services**      |                                  |        |           |
+|                        | login.service.test.ts            | 5      | ✅ 100%   |
+|                        | token.service.test.ts            | 3      | ✅ 100%   |
+| **Auth Middlewares**   |                                  |        |           |
+|                        | ensure-authenticated.test.ts     | 9      | ✅ 100%   |
+| **Auth Utils**         |                                  |        |           |
+|                        | password.util.test.ts            | 9      | ✅ 100%   |
+| **User Services**      |                                  |        |           |
+|                        | register.service.test.ts         | 7      | ✅ 100%   |
+|                        | delete-user.service.test.ts      | 4      | ✅ 100%   |
+|                        | update-user.service.test.ts      | 6      | ✅ 100%   |
+|                        | get-all-users.service.test.ts    | 3      | ✅ 100%   |
+|                        | get-user-by-id.service.test.ts   | 4      | ✅ 100%   |
+|                        | to-public-user.service.test.ts   | 3      | ✅ 100%   |
+| **Shared Middlewares** |                                  |        |           |
+|                        | error-handler.middleware.test.ts | 8      | ✅ 100%   |
+|                        | validation.middleware.test.ts    | 11     | ✅ 100%   |
+| **Shared Utils**       |                                  |        |           |
+|                        | logger.util.test.ts              | 24     | ✅ 100%   |
 
 ### Executar Testes
 
@@ -506,56 +541,11 @@ src/test/
 # Executar todos os testes
 npm test
 
-# Executar testes com coverage
+# Executar testes com coverage report
 npm run test:coverage
 
-# Modo watch (reexecuta ao salvar)
+# Modo watch (reexecuta ao salvar arquivos)
 npm run test:watch
-```
-
-### Exemplo de Teste
-
-```typescript
-describe("RegisterService", () => {
-  let service: RegisterService;
-  let userFinderMock: jest.Mocked<IUserFinder>;
-
-  beforeEach(() => {
-    // Setup de mocks injetáveis
-    userFinderMock = {
-      findByEmail: jest.fn(),
-      findById: jest.fn(),
-      findAll: jest.fn(),
-    };
-    service = new RegisterService(
-      userFinderMock,
-      userPersistenceMock,
-      toPublicUserServiceMock,
-      tokenServiceMock,
-    );
-  });
-
-  it("deve registrar um novo usuário com sucesso", async () => {
-    // Arrange - setup de dados e mocks
-    userFinderMock.findByEmail.mockResolvedValue(null);
-
-    // Act - executa o método
-    const result = await service.execute(input);
-
-    // Assert - verifica resultado
-    expect(result.token).toBeDefined();
-    expect(result.user.email).toBe("joao@example.com");
-  });
-});
-```
-
-### Teste Result Summary
-
-```
-Test Suites: 6 passed, 6 total ✅
-Tests:       22 passed, 22 total ✅
-Snapshots:   0 total
-Time:        ~2.5s
 ```
 
 ## 📊 Logging

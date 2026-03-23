@@ -6,7 +6,6 @@ import { USER_TOKENS } from "../../modules/user/user-tokens";
 import { ToPublicUserService } from "../../modules/user/services/to-public-user.service";
 import { TokenService } from "../../modules/auth/services/token.service";
 import { AUTH_TOKENS } from "../../modules/auth/auth-tokens";
-import { AuthService } from "../../modules/auth/services/auth.service";
 import { initializeDataSource } from "../db/config/typeorm.config";
 import { AuditSubscriber } from '../db/subscribers/AuditSubscriber';
 
@@ -32,11 +31,6 @@ export const initializeContainer = async () => {
   container.registerSingleton(
     AUTH_TOKENS.TokenService,
     TokenService
-  ); 
-
-  container.registerSingleton(
-    AUTH_TOKENS.AuthService,
-    AuthService
   ); 
 
   container.registerSingleton(AuditSubscriber);

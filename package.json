@@ -7,7 +7,7 @@
     "dev": "nodemon src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "jest",
+    "test": "jest --silent",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "migrations:run": "npx ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d ./src/shared/db/config/typeorm.config.ts"

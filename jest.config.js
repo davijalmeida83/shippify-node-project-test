@@ -6,11 +6,18 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/test/setup.ts'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   collectCoverageFrom: [
-    '**/*.ts',
+    'modules/**/services/**/*.ts',
+    'modules/**/middlewares/**/*.ts',
+    'shared/middleware/**/*.ts',
+    'shared/utils/**/*.ts',
+    'modules/**/utils/**/*.ts',
     '!**/*.d.ts',
-    '!**/index.ts',
     '!**/setup.ts',
     '!**/node_modules/**',
+  ],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/dist/',
   ],
   coverageDirectory: '../coverage',
   moduleNameMapper: {

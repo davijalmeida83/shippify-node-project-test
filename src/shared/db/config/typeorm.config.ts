@@ -1,5 +1,6 @@
 import { DataSource } from "typeorm";
 import dotenv from "dotenv";
+import { logger } from "../../utils/logger";
 
 dotenv.config();
 
@@ -24,10 +25,10 @@ export const initializeDataSource = async () => {
   if (!isDataSourceInitialized) {
     try {
       await AppDataSource.initialize();
-      console.log("DataSource inicializado com sucesso!");
+      logger.info("DataSource inicializado com sucesso!");
       isDataSourceInitialized = true;
     } catch (err) {
-      console.error("Erro durante a inicialização do DataSource", err);
+      logger.error("Erro durante a inicialização do DataSource", err);
     }
   }
 };
