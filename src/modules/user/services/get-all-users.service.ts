@@ -4,6 +4,8 @@ import { USER_TOKENS } from "../user-tokens";
 import { PublicUserResponseDto } from "../dtos/Response/public-user-response.dto";
 import { ToPublicUserService } from "./to-public-user.service";
 import { logger } from "../../../shared/utils/logger";
+import { Cached } from "../../../shared/cache/decorators/cache.decorator";
+import { REDIS_CONFIG } from "../../../shared/config/redis.config";
 
 @injectable()
 export class GetAllUsersService {
@@ -17,8 +19,13 @@ export class GetAllUsersService {
 
   /**
    * Retorna todos os usuários do sistema em formato público
+   * Com cache de 15 minutos
    * @returns Lista de usuários sem dados sensíveis
    */
+  @Cached({
+    key: REDIS_CONFIG.keyPrefix.userList,
+    ttl: REDIS_CONFIG.ttl.userList,
+  })
   public async execute(): Promise<PublicUserResponseDto[]> {
     logger.info(`[GetAllUsersService] Buscando todos os usuários...`);
     const users = await this.userFinder.findAll();

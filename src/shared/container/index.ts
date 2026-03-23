@@ -8,6 +8,8 @@ import { TokenService } from "../../modules/auth/services/token.service";
 import { AUTH_TOKENS } from "../../modules/auth/auth-tokens";
 import { initializeDataSource } from "../db/config/typeorm.config";
 import { AuditSubscriber } from '../db/subscribers/AuditSubscriber';
+import { RedisCacheService } from "../cache/redis-cache.service";
+import { ICacheService } from "../cache/interfaces/cache-service.interface";
 
 export const initializeContainer = async () => {
  
@@ -34,5 +36,11 @@ export const initializeContainer = async () => {
   ); 
 
   container.registerSingleton(AuditSubscriber);
+
+  // Registrar serviço de cache
+  container.registerSingleton<ICacheService>(
+    "CacheService",
+    RedisCacheService
+  );
 
 };
