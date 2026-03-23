@@ -258,6 +258,77 @@ Authorization: Bearer {token}
 - **Authentication JWT** - Proteção de rotas com tokens JWT
 - **Auditoria** - Todas as operações são registradas com histórico de mudanças
 - **Tratamento de erros** - Erros padronizados sem exposição de detalhes sensíveis
+- **Rate Limiting** - Proteção contra DDoS e força bruta com limites inteligentes
+
+### Rate Limiting (Proteção contra DDoS)
+
+A API implementa estratégias de rate limiting por IP para prevenir ataques DDoS e força bruta:
+
+#### 🌍 Rate Limiter Global
+
+- **Limite**: 100 requisições por 15 minutos por IP
+- **Aplicação**: Todas as rotas (exceto health checks)
+- **Headers**: Retorna `RateLimit-*` headers com informações de limite
+
+#### 🔑 Rate Limiter de Autenticação
+
+- **Limite**: 5 tentativas por 15 minutos por IP
+- **Aplicação**: `/api/auth/login`
+- **Objetivo**: Proteção contra força bruta em autenticação
+- **Todas as requisições são contadas**, independente de sucesso
+
+#### ➕ Rate Limiter de Criação
+
+- **Limite**: 20 requisições por 15 minutos por IP
+- **Aplicação**: `POST /api/user/register`
+- **Objetivo**: Evitar spam de registros
+
+#### ⚠️ Rate Limiter Sensível
+
+- **Limite**: 10 operações por 15 minutos por IP + User ID
+- **Aplicação**: `PUT /api/user/:id`, `DELETE /api/user/:id`
+- **Objetivo**: Proteção de operações críticas com identificação por usuário
+
+#### Resposta ao Atingir Limite
+
+```json
+{
+  "statusCode": 429,
+  "message": "Muitas requisições deste IP, tente novamente depois de 15 minutos"
+}
+```
+
+**Headers de Rate Limiting:**
+
+```
+RateLimit-Limit: 100
+RateLimit-Remaining: 95
+RateLimit-Reset: 1674193088
+```
+
+#### Configuração de Rate Limiting
+
+Os limitadores estão centralizados em [src/shared/middleware/rate-limit.middleware.ts](src/shared/middleware/rate-limit.middleware.ts):
+
+```typescript
+// Exemplo de rate limiter customizado
+export const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // Janela de tempo: 15 minutos
+  max: 5, // Máximo de 5 requisições
+  message: "...", // Mensagem de erro
+  standardHeaders: true, // Habilitar headers de rate limit
+  skipSuccessfulRequests: false, // Contar requisições bem-sucedidas
+  keyGenerator: (req) => req.ip, // Gerar chave por IP
+});
+```
+
+#### ✅ Benefícios da Implementação
+
+- **Proteção contra DDoS** - Limita requisições por IP
+- **Prevenção de força bruta** - Limite reduzido em autenticação (5 tentativas)
+- **Visibilidade** - Headers padrão informam cliente sobre limites
+- **Flexibilidade** - Diferentes limites para diferentes tipos de operação
+- **Performance** - Store em memória (configurável para Redis em produção)
 
 ### Campos Proibidos
 
