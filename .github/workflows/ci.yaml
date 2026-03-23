@@ -78,14 +78,25 @@ jobs:
               grouped[folder].brCov += brCov; grouped[folder].brTotal += brTotal;
               grouped[folder].lineCov += stmtCov; grouped[folder].lineTotal += stmtTotal;
             }
-            let table = '## 📊 Cobertura de Testes (Middlewares, Utils, Services)\n\n| Arquivo | Statements | Branches | Functions | Lines |\n|---------|------------|----------|-----------|-------|\n';
+            const getBar = (pct) => {
+              const filled = Math.round(pct / 10);
+              const empty = 10 - filled;
+              const bar = '█'.repeat(filled) + '░'.repeat(empty);
+              const color = pct === 100 ? '🟢' : pct >= 80 ? '🟡' : '🔴';
+              return `${color} ${bar}`;
+            };
+            let table = '## 📊 Cobertura de Testes (Middlewares, Utils, Services)\n\n| Arquivo | Statements | Branches | Functions | Lines |\n|---------|:----------:|:--------:|:---------:|:-----:|\n';
             Object.keys(grouped).sort().forEach(folder => {
               const g = grouped[folder];
-              const stmt = `${g.stmtTotal > 0 ? ((g.stmtCov / g.stmtTotal) * 100).toFixed(0) : '0'}% (${g.stmtCov}/${g.stmtTotal})`;
-              const branches = `${g.brTotal > 0 ? ((g.brCov / g.brTotal) * 100).toFixed(0) : '0'}% (${g.brCov}/${g.brTotal})`;
-              const functions = `${g.fnTotal > 0 ? ((g.fnCov / g.fnTotal) * 100).toFixed(0) : '0'}% (${g.fnCov}/${g.fnTotal})`;
-              const lines = `${g.lineTotal > 0 ? ((g.lineCov / g.lineTotal) * 100).toFixed(0) : '0'}% (${g.lineCov}/${g.lineTotal})`;
-              table += `| ${folder} | ${stmt} | ${branches} | ${functions} | ${lines} |\n`;
+              const stmtPct = g.stmtTotal > 0 ? (g.stmtCov / g.stmtTotal) * 100 : 0;
+              const brPct = g.brTotal > 0 ? (g.brCov / g.brTotal) * 100 : 0;
+              const fnPct = g.fnTotal > 0 ? (g.fnCov / g.fnTotal) * 100 : 0;
+              const linePct = g.lineTotal > 0 ? (g.lineCov / g.lineTotal) * 100 : 0;
+              const stmt = `${getBar(stmtPct)}\n${stmtPct.toFixed(0)}% (${g.stmtCov}/${g.stmtTotal})`;
+              const branches = `${getBar(brPct)}\n${brPct.toFixed(0)}% (${g.brCov}/${g.brTotal})`;
+              const functions = `${getBar(fnPct)}\n${fnPct.toFixed(0)}% (${g.fnCov}/${g.fnTotal})`;
+              const lines = `${getBar(linePct)}\n${linePct.toFixed(0)}% (${g.lineCov}/${g.lineTotal})`;
+              table += `| **${folder}** | ${stmt} | ${branches} | ${functions} | ${lines} |\n`;
             });
             await github.rest.issues.createComment({ issue_number: context.issue.number, owner: context.repo.owner, repo: context.repo.repo, body: table });
 
