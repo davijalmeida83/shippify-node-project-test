@@ -1,6 +1,8 @@
 name: Coverage - Relatório de Cobertura
 on:
-  pull_request:
+  workflow_run:
+    workflows: ["Build - Compilação TypeScript"]
+    types: [completed]
     branches: [main]
 
 permissions:
