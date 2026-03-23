@@ -17,6 +17,8 @@ A Shippify API é um serviço de backend completo que fornece funcionalidades es
 - **Tratamento centralizado** de erros
 - **Logging estruturado** de todas as operações para tracking
 - **Injeção e Inversão de dependência** com TSyringe
+- **Cache com Redis** para otimizar performance com decoradores @Cached e @InvalidateCache
+- **Rate Limiting** com proteção contra força bruta e operações sensíveis
 
 ## 🚀 Tecnologias Utilizadas
 
@@ -583,7 +585,421 @@ Exemplo de registro de auditoria:
 }
 ```
 
-## 📝 Variáveis de Ambiente
+## � Cache com Redis
+
+A API utiliza Redis para cache em memória, melhorando significativamente a performance e reduzindo a carga no banco de dados.
+
+### 🎯 Estratégia de Cache
+
+- **TTL configurável**: Tempo de vida padrão para cada tipo de dado
+- **Invalidação automática**: Cache é automaticamente invalidado quando dados são modificados
+- **Compatibilidade com falhas**: Se Redis não estiver disponível, a aplicação continua funcionando sem cache
+
+### 📌 Decoradores de Cache
+
+#### @Cached()
+
+Armazena o resultado de uma função/método no Redis:
+
+```typescript
+import { Cached } from "@shared/cache/decorators";
+
+@injectable()
+export class UserService {
+  // Cache por 15 minutos (900 segundos)
+  @Cached({ key: "user:{{0}}", ttl: 900 })
+  async getUserById(id: string): Promise<User> {
+    return await this.userRepository.findOne({ where: { id } });
+  }
+
+  // Cache dinâmico com múltiplos parâmetros
+  @Cached({ key: "user:email:{{0}}:active:{{1}}", ttl: 600 })
+  async getUserByEmail(email: string, isActive: boolean): Promise<User> {
+    return await this.userRepository.findOne({ where: { email, isActive } });
+  }
+
+  // Cache com condição (só cacheia se a condição for verdadeira)
+  @Cached({
+    key: "users:all",
+    ttl: 1800,
+    condition: () => process.env.NODE_ENV === "production",
+  })
+  async getAllUsers(): Promise<User[]> {
+    return await this.userRepository.find();
+  }
+}
+```
+
+#### @InvalidateCache()
+
+Remove valores em cache quando dados são modificados:
+
+```typescript
+@injectable()
+export class UserService {
+  // Remove do cache após criar usuário
+  @InvalidateCache("users:all", "user:cache:*")
+  async createUser(data: CreateUserDto): Promise<User> {
+    return await this.userRepository.create(data);
+  }
+
+  // Invalida múltiplos padrões de cache
+  @InvalidateCache("user:{{0}}", "users:all")
+  async updateUser(id: string, data: UpdateUserDto): Promise<User> {
+    return await this.userRepository.update(id, data);
+  }
+
+  // Remove padrão de cache com wildcard
+  @InvalidateCache("user:*")
+  async deleteUser(id: string): Promise<void> {
+    await this.userRepository.remove(id);
+  }
+}
+```
+
+### 🔑 Padrões de Chave de Cache
+
+A interpolação de parâmetros usa a sintaxe `{{index}}`:
+
+```typescript
+// {{0}} = primeiro parâmetro
+// {{1}} = segundo parâmetro
+// {{2}} = terceiro parâmetro
+
+@Cached({ key: "user:{{0}}:role:{{1}}" })
+async getUserByIdAndRole(id: string, role: string) { }
+```
+
+### 📊 Configuração de Cache
+
+No arquivo `.env`:
+
+```env
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_DB=0
+REDIS_PASSWORD=
+
+# Cache TTLs (em segundos)
+CACHE_TTL_USER=900        # 15 minutos
+CACHE_TTL_USERS=1800      # 30 minutos
+CACHE_TTL_SESSION=3600    # 1 hora
+```
+
+No arquivo `.env.docker`:
+
+```env
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_DB=0
+```
+
+### 🏗️ Estrutura de Cache
+
+```
+src/shared/cache/
+├── redis-cache.service.ts     # Implementação do serviço Redis
+├── interfaces/
+│   └── cache-service.interface.ts  # Contrato do serviço
+└── decorators/
+    └── cache.decorator.ts      # Decoradores @Cached e @InvalidateCache
+```
+
+### 💡 Exemplo de Uso Completo
+
+```typescript
+@injectable()
+export class UserService {
+  constructor(
+    @inject(UserRepository) private userRepository: IUserPersistence,
+  ) {}
+
+  // Busca do banco, armazena em cache por 15 min
+  @Cached({ key: "user:{{0}}", ttl: 900 })
+  async getUserById(id: string): Promise<User> {
+    console.log(`Buscando usuário ${id} no banco...`);
+    return await this.userRepository.findOne({ where: { id } });
+  }
+
+  // Lista em cache por 30 min
+  @Cached({ key: "users:all", ttl: 1800 })
+  async getAllUsers(): Promise<User[]> {
+    console.log("Buscando todos os usuários no banco...");
+    return await this.userRepository.find();
+  }
+
+  // Cria usuário e invalida cache
+  @InvalidateCache("users:all")
+  async createUser(dto: CreateUserDto): Promise<User> {
+    const user = await this.userRepository.create(dto);
+    // Cache "users:all" é removido automaticamente
+    return user;
+  }
+
+  // Atualiza e invalida cache específico
+  @InvalidateCache("user:{{0}}", "users:all")
+  async updateUser(id: string, dto: UpdateUserDto): Promise<User> {
+    const user = await this.userRepository.update(id, dto);
+    // Cache "user:{id}" e "users:all" são removidos automaticamente
+    return user;
+  }
+}
+```
+
+**Comportamento esperado:**
+
+```
+GET /api/users (primeira chamada)
+→ Cache miss, executa método, armazena resultado por 30 min
+→ Resposta: [usuarios do banco]
+
+GET /api/users (segunda chamada, dentro de 30 min)
+→ Cache hit, retorna resultado de cache
+→ Resposta: [usuarios do cache]
+
+POST /api/users (criar novo usuário)
+→ Executa createUser() que invalida cache "users:all"
+
+GET /api/users (chamada após criar)
+→ Cache miss (foi invalidado), executa método novamente
+→ Resposta: [usuarios atualizados do banco]
+```
+
+## �️ Rate Limiting
+
+A API implementa rate limiting em múltiplas camadas para proteção contra força bruta, abuso e operações sensíveis. Utiliza Redis para armazenar contadores de requisições.
+
+### 📊 Estratégias de Rate Limiting
+
+A API possui 4 níveis diferentes de proteção:
+
+| Limitador     | Limit   | Janela | Proteção                     | Chave        |
+| ------------- | ------- | ------ | ---------------------------- | ------------ |
+| **Global**    | 100 req | 15 min | Todas requisições            | IP           |
+| **Auth**      | 5 req   | 15 min | Login/Register (força bruta) | IP           |
+| **Creation**  | 20 req  | 15 min | POST endpoints               | IP           |
+| **Sensitive** | 10 req  | 15 min | DELETE/PUT autenticado       | IP + User ID |
+
+### 🎯 Como Funciona
+
+**Rate Limiting Global:**
+
+- Aplica-se a TODAS as requisições
+- Limite: 100 requisições por IP a cada 15 minutos
+- Exceções: `/health` (health checks) não contam
+
+```bash
+GET /api/users
+# Headers da resposta:
+# RateLimit-Limit: 100
+# RateLimit-Remaining: 99
+# RateLimit-Reset: 1711199400
+```
+
+**Rate Limiting de Autenticação (Força Bruta):**
+
+- Protege endpoints de login e registro
+- Limite: 5 tentativas por IP a cada 15 minutos
+- Melhor prática: Implementar espera exponencial no cliente
+
+```bash
+POST /api/auth/login
+X-Forwarded-For: 192.168.1.1
+
+# Resposta na 6ª tentativa:
+HTTP/1.1 429 Too Many Requests
+{
+  "message": "Muitas tentativas de autenticação, tente novamente depois de 15 minutos"
+}
+
+# Headers:
+# Retry-After: 830 (segundos até reset)
+```
+
+**Rate Limiting de Criação (POST):**
+
+- Protege endpoints de criação de recursos
+- Limite: 20 requisições por IP a cada 15 minutos
+- Aplicado em: `POST /api/user/register`, `POST /api/users`
+
+```bash
+POST /api/user/register
+Content-Type: application/json
+
+{
+  "name": "João Silva",
+  "email": "joao@example.com",
+  "password": "senha-segura@123"
+}
+
+# Resposta na 21ª tentativa:
+HTTP/1.1 429 Too Many Requests
+{
+  "message": "Muitas requisições de criação, tente novamente depois de 15 minutos"
+}
+```
+
+**Rate Limiting Sensível (Operações Protegidas):**
+
+- Protege operações destrutivas/críticas
+- Limite: 10 operações por (IP + User ID) a cada 15 minutos
+- Aplicado em: `PUT /api/user/:id`, `DELETE /api/user/:id`
+- Combina IP + User ID para ser mais preciso
+
+```bash
+DELETE /api/user/306e4c7d-98c9-4b0b-b823-654364a56cb8
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# Resposta na 11ª tentativa:
+HTTP/1.1 429 Too Many Requests
+{
+  "message": "Muitas operações sensíveis, tente novamente depois de 15 minutos"
+}
+```
+
+### 🔑 Headers de Rate Limit
+
+Toda resposta inclui headers padrão RateLimit:
+
+```
+RateLimit-Limit: 100          # Limite total
+RateLimit-Remaining: 87       # Requisições restantes
+RateLimit-Reset: 1711199400   # Timestamp Unix quando reseta
+```
+
+Se exceder o limite, recebe também:
+
+```
+HTTP/1.1 429 Too Many Requests
+Retry-After: 520              # Segundos até poder fazer nova tentativa
+```
+
+### 📋 Configuração de Rate Limit
+
+No arquivo `src/shared/config/rate-limit.config.ts`:
+
+```typescript
+export const RATE_LIMIT_CONFIG = {
+  // Janela de tempo (15 minutos)
+  windowMs: 15 * 60 * 1000,
+
+  // Rate limit global
+  global: {
+    max: 100,
+    message:
+      "Muitas requisições deste IP, tente novamente depois de 15 minutos",
+  },
+
+  // Rate limit de autenticação
+  auth: {
+    max: 5,
+    message:
+      "Muitas tentativas de autenticação, tente novamente depois de 15 minutos",
+    skipSuccessfulRequests: false,
+  },
+
+  // Rate limit de criação
+  creation: {
+    max: 20,
+    message:
+      "Muitas requisições de criação, tente novamente depois de 15 minutos",
+  },
+
+  // Rate limit sensível
+  sensitive: {
+    max: 10,
+    message: "Muitas operações sensíveis, tente novamente depois de 15 minutos",
+  },
+};
+```
+
+### 🏗️ Estrutura de Rate Limit
+
+```
+src/shared/middleware/
+├── rate-limit.middleware.ts        # Implementação dos limitadores
+└── rate-limit.config.ts            # Configuração centralizada
+```
+
+Funcionários auxiliares:
+
+- `extractClientIpWithUserId()` - Combina IP + User ID para chave
+- `shouldSkipRateLimit()` - Define rotas que não contam com rate limit
+- `getIpBasedKey()` - Extrai IP com suporte a IPv6
+
+### 💡 Exemplo de Tratamento de Rate Limit no Cliente
+
+```typescript
+// React/Angular/Vue
+async function loginWithRetry(
+  email: string,
+  password: string,
+  maxRetries = 3,
+): Promise<AuthResponse> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.status === 429) {
+        const retryAfter = parseInt(
+          response.headers.get("Retry-After") || "60",
+        );
+        const waitSeconds = retryAfter * Math.pow(2, attempt - 1); // Exponencial
+
+        console.warn(
+          `Rate limited. Aguarde ${waitSeconds}s antes de tentar novamente`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, waitSeconds * 1000));
+        continue;
+      }
+
+      return await response.json();
+    } catch (error) {
+      if (attempt === maxRetries) throw error;
+    }
+  }
+}
+
+// Uso:
+try {
+  const auth = await loginWithRetry("user@example.com", "password");
+  console.log("Logged in:", auth.user.name);
+} catch (error) {
+  console.error("Login failed:", error);
+}
+```
+
+### ⚙️ Customização de Rate Limit
+
+Para alterar os limites, edite `src/shared/config/rate-limit.config.ts`:
+
+```typescript
+// Aumentar limite global para 200 req/15min
+global: {
+  max: 200,  // ← alterar aqui
+  message: "..."
+}
+
+// Reduzir tentativas de auth para 3 (mais restritivo)
+auth: {
+  max: 3,    // ← alterar aqui
+  message: "..."
+}
+```
+
+Depois recompile e reinicie:
+
+```bash
+npm run build
+npm start
+```
+
+## �📝 Variáveis de Ambiente
 
 ```env
 # Database
@@ -597,6 +1013,12 @@ DATABASE_NAME=shippify
 # JWT
 JWT_SECRET=sua-chave-secreta-muito-segura
 JWT_EXPIRATION=24h
+
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_DB=0
+REDIS_PASSWORD=
 
 # Server
 NODE_ENV=development
