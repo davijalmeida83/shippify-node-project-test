@@ -4,14 +4,10 @@ import { ICacheService } from "../../../shared/cache/interfaces/cache-service.in
 import { RedisCacheService } from "../../../shared/cache/redis-cache.service";
 import { REDIS_CONFIG } from "../../../shared/config/redis.config";
 
-/**
- * Testes para decoradores de cache
- */
 describe("Cache Decorators", () => {
   let mockCacheService: jest.Mocked<ICacheService>;
 
   beforeEach(() => {
-    // Mock do serviço de cache
     mockCacheService = {
       get: jest.fn(),
       set: jest.fn(),
@@ -22,7 +18,6 @@ describe("Cache Decorators", () => {
       flush: jest.fn(),
     };
 
-    // Registrar mock no container
     container.registerInstance<ICacheService>("CacheService", mockCacheService);
   });
 

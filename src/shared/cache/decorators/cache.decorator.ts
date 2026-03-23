@@ -22,18 +22,13 @@ export function Cached(options: CacheOptions) {
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: any[]) {
-      // Verificar condição
       if (options.condition && !options.condition(...args)) {
         return originalMethod.apply(this, args);
       }
 
       try {
         const cacheService = container.resolve<ICacheService>("CacheService");
-
-        // Gerar chave interpolada
         const cacheKey = interpolateKey(options.key, args);
-
-        // Tentar obter do cache
         const cachedValue = await cacheService.get(cacheKey);
         if (cachedValue !== null) {
           logger.debug(`[Cache] HIT: ${cacheKey}`);
@@ -49,10 +44,8 @@ export function Cached(options: CacheOptions) {
         );
       }
 
-      // Executar método original
       const result = await originalMethod.apply(this, args);
 
-      // Armazenar no cache
       try {
         const cacheService = container.resolve<ICacheService>("CacheService");
         const cacheKey = interpolateKey(options.key, args);
@@ -85,10 +78,8 @@ export function InvalidateCache(patterns: string | string[]) {
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: any[]) {
-      // Executar método original
       const result = await originalMethod.apply(this, args);
 
-      // Invalidar cache
       try {
         const cacheService = container.resolve<ICacheService>("CacheService");
         const patternList = Array.isArray(patterns) ? patterns : [patterns];
