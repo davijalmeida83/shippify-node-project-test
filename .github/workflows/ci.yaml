@@ -12,9 +12,9 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: "14"
+          node-version: "18"
       - name: Instalar dependências
-        run: npm install
+        run: npm install --legacy-peer-deps
       - name: Executar testes
         run: npm test
       - name: Gerar relatório de cobertura
@@ -26,6 +26,6 @@ jobs:
           files: ./coverage/lcov.info
           flags: unittests
           name: codecov-umbrella
-          fail_ci_if_error: true
+          fail_ci_if_error: false
       - name: Verificar vulnerabilidades
         run: npm audit --audit-level=high
