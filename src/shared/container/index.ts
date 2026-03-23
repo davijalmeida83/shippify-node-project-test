@@ -37,7 +37,6 @@ export const initializeContainer = async () => {
 
   container.registerSingleton(AuditSubscriber);
 
-  // Registrar serviço de cache
   container.registerSingleton<ICacheService>(
     "CacheService",
     RedisCacheService

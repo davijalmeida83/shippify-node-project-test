@@ -4,10 +4,6 @@ import { REDIS_CONFIG } from "../config/redis.config";
 import { ICacheService } from "./interfaces/cache-service.interface";
 import { logger } from "../utils/logger";
 
-/**
- * Serviço de cache usando Redis
- * Gerencia cache com suporte a TTL, padrões de chave e limpeza automática
- */
 @injectable()
 export class RedisCacheService implements ICacheService {
   private client: RedisClientType | null = null;
@@ -19,9 +15,6 @@ export class RedisCacheService implements ICacheService {
     }
   }
 
-  /**
-   * Inicializar conexão com Redis
-   */
   private async initialize(): Promise<void> {
     try {
       this.client = createClient({
@@ -66,9 +59,6 @@ export class RedisCacheService implements ICacheService {
     }
   }
 
-  /**
-   * Obter um valor do cache
-   */
   async get<T>(key: string): Promise<T | null> {
     if (!this.isConnected || !this.client) {
       return null;
@@ -91,9 +81,6 @@ export class RedisCacheService implements ICacheService {
     }
   }
 
-  /**
-   * Definir um valor no cache
-   */
   async set<T>(key: string, value: T, ttl?: number): Promise<void> {
     if (!this.isConnected || !this.client) {
       return;
@@ -119,9 +106,6 @@ export class RedisCacheService implements ICacheService {
     }
   }
 
-  /**
-   * Deletar uma ou mais chaves
-   */
   async del(key: string | string[]): Promise<void> {
     if (!this.isConnected || !this.client) {
       return;
@@ -142,9 +126,6 @@ export class RedisCacheService implements ICacheService {
     }
   }
 
-  /**
-   * Deletar chaves por padrão (glob pattern)
-   */
   async delByPattern(pattern: string): Promise<void> {
     if (!this.isConnected || !this.client) {
       return;
@@ -167,9 +148,6 @@ export class RedisCacheService implements ICacheService {
     }
   }
 
-  /**
-   * Verificar se uma chave existe
-   */
   async exists(key: string): Promise<boolean> {
     if (!this.isConnected || !this.client) {
       return false;
@@ -188,9 +166,6 @@ export class RedisCacheService implements ICacheService {
     }
   }
 
-  /**
-   * Obter TTL de uma chave
-   */
   async ttl(key: string): Promise<number> {
     if (!this.isConnected || !this.client) {
       return -2;
@@ -208,9 +183,6 @@ export class RedisCacheService implements ICacheService {
     }
   }
 
-  /**
-   * Limpar toda a base de dados
-   */
   async flush(): Promise<void> {
     if (!this.isConnected || !this.client) {
       return;
@@ -228,9 +200,6 @@ export class RedisCacheService implements ICacheService {
     }
   }
 
-  /**
-   * Fechar conexão com Redis
-   */
   async disconnect(): Promise<void> {
     if (this.client && this.isConnected) {
       await this.client.disconnect();

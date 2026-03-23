@@ -3,45 +3,16 @@ import { ICacheService } from "../interfaces/cache-service.interface";
 import { REDIS_CONFIG } from "../../config/redis.config";
 import { logger } from "../../utils/logger";
 
-/**
- * Opções para o decorador de cache
- */
 export interface CacheOptions {
-  /**
-   * Chave do cache (pode usar :param para interpolação de parâmetros)
-   * Ex: "user:{{0}}" para usar primeiro parâmetro
-   */
   key: string;
 
-  /**
-   * TTL em segundos (usa padrão se não fornecido)
-   */
   ttl?: number;
 
-  /**
-   * Invalidar cache quando esse método é chamado
-   */
   invalidate?: string | string[];
 
-  /**
-   * Condicional: função que retorna se deve usar cache
-   */
   condition?: (...args: any[]) => boolean;
 }
 
-/**
- * Decorador para cache com Redis
- * Armazena resultado de métodos no Redis com TTL configurável
- *
- * @example
- * @Cached({
- *   key: "user:{{0}}",
- *   ttl: REDIS_CONFIG.ttl.user
- * })
- * async getUser(id: string): Promise<User> {
- *   return this.userRepository.findOne(id);
- * }
- */
 export function Cached(options: CacheOptions) {
   return function (
     target: any,
@@ -105,16 +76,6 @@ export function Cached(options: CacheOptions) {
   };
 }
 
-/**
- * Decorador para invalidar cache
- * Remove chaves de cache após a execução do método
- *
- * @example
- * @InvalidateCache("user:*")
- * async updateUser(id: string): Promise<void> {
- *   // Atualizar usuário
- * }
- */
 export function InvalidateCache(patterns: string | string[]) {
   return function (
     target: any,
@@ -152,14 +113,6 @@ export function InvalidateCache(patterns: string | string[]) {
   };
 }
 
-/**
- * Interpolar chave com parâmetros
- * Suporta {{index}} para referência de parâmetros
- *
- * @example
- * interpolateKey("user:{{0}}", ["123"]) // "user:123"
- * interpolateKey("user:{{0}}:posts:{{1}}", ["123", "456"]) // "user:123:posts:456"
- */
 function interpolateKey(key: string, args: any[]): string {
   let result = key;
 
