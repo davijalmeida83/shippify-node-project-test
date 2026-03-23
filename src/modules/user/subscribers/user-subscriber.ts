@@ -1,6 +1,6 @@
 import { EventSubscriber, EntitySubscriberInterface, InsertEvent } from "typeorm";
 import { User } from "../domain/user";
-import { AuditLog } from "../../../shared/entities/AuditLog";
+import { AuditLog } from "../../../shared/db/entities/AuditLog";
 
 @EventSubscriber()
 export class UserSubscriber implements EntitySubscriberInterface<User> {
@@ -20,8 +20,8 @@ export class UserSubscriber implements EntitySubscriberInterface<User> {
     await auditLogRepository.save({
       entity: "User",
       operation: "CREATE",
-      newData: event.entity,
-      user: "admin", // Substitua pelo usuário autenticado
+      newData: JSON.stringify(event.entity),
+      user: "admin",
     });
   }
 }

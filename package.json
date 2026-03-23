@@ -5,7 +5,9 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon src/index.ts",
-    "build": "tsc",
+    "compile": "tsc",
+    "copy-config": "node -e \"const fs = require('fs'); const path = require('path'); fs.mkdirSync(path.join(__dirname, 'dist', 'shared', 'db', 'config'), {recursive: true}); fs.copyFileSync(path.join(__dirname, 'src', 'shared', 'db', 'config', 'ormconfig.json'), path.join(__dirname, 'dist', 'shared', 'db', 'config', 'ormconfig.json'))\"",
+    "build": "npm run compile && npm run copy-config",
     "start": "node dist/index.js",
     "test": "jest --silent",
     "test:watch": "jest --watch",
