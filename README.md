@@ -649,7 +649,77 @@ npm run test:coverage
 npm run test:watch
 ```
 
-## 📊 Logging
+## CI/CD - GitHub Actions
+
+### Workflows Automáticos
+
+Este projeto implementa dois workflows GitHub Actions que garantem qualidade de código e execução de testes automáticos a cada Pull Request:
+
+#### 1. Build - Compilação TypeScript
+
+- **Arquivo**: `.github/workflows/build.yaml`
+- **Trigger**: Push e Pull Requests para `main`
+- **Ações**:
+  - Setup Node.js 18
+  - Instala dependências (`npm install --legacy-peer-deps`)
+  - Compila TypeScript (`npm run build`)
+- **Objetivo**: Garantir que o código compila sem erros
+
+#### 2. Coverage - Relatório de Cobertura
+
+- **Arquivo**: `.github/workflows/coverage.yaml`
+- **Trigger**: Após build completar com sucesso (`workflow_run`)
+- **Ações**:
+  - Setup Node.js 18
+  - Instala dependências
+  - Executa testes (`npm test`)
+  - Gera relatório de cobertura (`npm run test:coverage`)
+  - Envia para Codecov (com `CODECOV_TOKEN`)
+  - Comenta no PR com resumo de cobertura (statements, branches, functions, lines)
+- **Objetivo**: Garantir 100% de cobertura de testes
+
+### Sequencia de Execução
+
+```
+Pull Request Aberto
+        |
+   Build Workflow (push trigger)
+        |
+   Compila TypeScript
+        |
+   Build Sucesso [OK]
+        |
+   Coverage Workflow (workflow_run trigger)
+        |
+   Executa Testes + Coverage
+        |
+   Comenta no PR com resultado
+        |
+   Status Checks Passam [OK]
+```
+
+### Variaveis de Ambiente (Secrets)
+
+Para que o Coverage funcione e comente no PR, configure:
+
+1. **CODECOV_TOKEN** - Token do Codecov para enviar relatórios
+   - Acesse: https://app.codecov.io
+   - Copie o token do repositório
+
+2. **GITHUB_TOKEN** - Token do GitHub (disponível automaticamente)
+   - Usado para postar comentários no PR
+
+### Como Usar
+
+1. **Abra um Pull Request** para a branch `main`
+2. **Workflows disparam automaticamente**:
+   - Build executa primeiro
+   - Coverage executa após build suceder
+3. **Veja os resultados**:
+   - No PR, clique em "Checks" para ver status
+   - Coverage comenta automaticamente no PR com resumo
+
+## Logging
 
 A API implementa logging estruturado em todos os pontos críticos:
 
