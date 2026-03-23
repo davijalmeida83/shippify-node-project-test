@@ -5,6 +5,7 @@ module.exports = {
   testMatch: ['**/__tests__/**/*.test.ts', '**/*.test.ts'],
   setupFilesAfterEnv: ['<rootDir>/test/setup.ts'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  forceExit: true,
   collectCoverageFrom: [
     'modules/**/services/**/*.ts',
     'modules/**/middlewares/**/*.ts',

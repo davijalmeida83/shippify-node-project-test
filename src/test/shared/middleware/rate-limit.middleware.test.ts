@@ -106,7 +106,7 @@ describe("Rate Limit Middlewares", () => {
   });
 
   describe("globalRateLimiter", () => {
-    it("deve permitir requisição quando sob o limite", async () => {
+    it("deve permitir requisição e fazer rate limit por IP", async () => {
       await globalRateLimiter(
         mockReq as Request,
         mockRes as Response,
@@ -128,17 +128,6 @@ describe("Rate Limit Middlewares", () => {
       expect(mockNext).toHaveBeenCalled();
     });
 
-    it("deve gerar chave baseada no IP", async () => {
-      await globalRateLimiter(
-        mockReq as Request,
-        mockRes as Response,
-        mockNext as NextFunction
-      );
-
-      // A chave deve ser baseada no IP
-      expect(mockNext).toHaveBeenCalled();
-    });
-
     it("deve usar remoteAddress como fallback quando IP não está disponível", async () => {
       (mockReq as any).ip = undefined;
 
@@ -153,30 +142,7 @@ describe("Rate Limit Middlewares", () => {
   });
 
   describe("authRateLimiter", () => {
-    it("deve permitir requisição de autenticação quando sob o limite", async () => {
-      await authRateLimiter(
-        mockReq as Request,
-        mockRes as Response,
-        mockNext as NextFunction
-      );
-
-      expect(mockNext).toHaveBeenCalled();
-    });
-
-    it("deve contar requisições bem-sucedidas", async () => {
-      // Este teste valida que skipSuccessfulRequests está false
-      const req = { ...mockReq } as Request;
-
-      await authRateLimiter(
-        req,
-        mockRes as Response,
-        mockNext as NextFunction
-      );
-
-      expect(mockNext).toHaveBeenCalled();
-    });
-
-    it("deve usar IP como chave para rate limiting", async () => {
+    it("deve fazer rate limit de autenticação por IP (contar todas as requisições)", async () => {
       await authRateLimiter(
         mockReq as Request,
         mockRes as Response,
@@ -188,19 +154,9 @@ describe("Rate Limit Middlewares", () => {
   });
 
   describe("creationRateLimiter", () => {
-    it("deve permitir requisição POST quando sob o limite", async () => {
+    it("deve fazer rate limit de criação por IP", async () => {
       (mockReq as any).method = "POST";
 
-      await creationRateLimiter(
-        mockReq as Request,
-        mockRes as Response,
-        mockNext as NextFunction
-      );
-
-      expect(mockNext).toHaveBeenCalled();
-    });
-
-    it("deve usar IP como chave para rate limiting", async () => {
       await creationRateLimiter(
         mockReq as Request,
         mockRes as Response,
@@ -212,19 +168,8 @@ describe("Rate Limit Middlewares", () => {
   });
 
   describe("sensitiveRateLimiter", () => {
-    it("deve permitir operação sensível quando sob o limite", async () => {
+    it("deve combinar IP e User ID na chave para operações sensíveis", async () => {
       (mockReq as any).method = "DELETE";
-
-      await sensitiveRateLimiter(
-        mockReq as Request,
-        mockRes as Response,
-        mockNext as NextFunction
-      );
-
-      expect(mockNext).toHaveBeenCalled();
-    });
-
-    it("deve combinar IP e User ID na chave", async () => {
       (mockReq as any).user = { id: "user-456" };
 
       await sensitiveRateLimiter(
@@ -236,7 +181,7 @@ describe("Rate Limit Middlewares", () => {
       expect(mockNext).toHaveBeenCalled();
     });
 
-    it("deve usar 'anonymous' quando usuário não está autenticado", async () => {
+    it("deve usar 'anonymous' quando usuário não está autenticado em operação sensível", async () => {
       (mockReq as any).user = undefined;
 
       await sensitiveRateLimiter(
@@ -248,52 +193,10 @@ describe("Rate Limit Middlewares", () => {
       expect(mockNext).toHaveBeenCalled();
     });
 
-    it("deve usar remoteAddress como fallback de IP", async () => {
+    it("deve usar remoteAddress como fallback de IP em operação sensível", async () => {
       (mockReq as any).ip = undefined;
       (mockReq as any).socket = { remoteAddress: "10.0.0.1" } as any;
 
-      await sensitiveRateLimiter(
-        mockReq as Request,
-        mockRes as Response,
-        mockNext as NextFunction
-      );
-
-      expect(mockNext).toHaveBeenCalled();
-    });
-  });
-
-  describe("Rate Limit Headers", () => {
-    it("globalRateLimiter deve incluir headers de rate limit", async () => {
-      await globalRateLimiter(
-        mockReq as Request,
-        mockRes as Response,
-        mockNext as NextFunction
-      );
-
-      expect(mockNext).toHaveBeenCalled();
-    });
-
-    it("authRateLimiter deve incluir headers de rate limit", async () => {
-      await authRateLimiter(
-        mockReq as Request,
-        mockRes as Response,
-        mockNext as NextFunction
-      );
-
-      expect(mockNext).toHaveBeenCalled();
-    });
-
-    it("creationRateLimiter deve incluir headers de rate limit", async () => {
-      await creationRateLimiter(
-        mockReq as Request,
-        mockRes as Response,
-        mockNext as NextFunction
-      );
-
-      expect(mockNext).toHaveBeenCalled();
-    });
-
-    it("sensitiveRateLimiter deve incluir headers de rate limit", async () => {
       await sensitiveRateLimiter(
         mockReq as Request,
         mockRes as Response,

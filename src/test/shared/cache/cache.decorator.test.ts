@@ -1,8 +1,8 @@
-import { Cached, InvalidateCache } from "../../../shared/cache/decorators/cache.decorator";
+import { Cached, InvalidateCache } from "../../../shared/db/cache/decorators/cache.decorator";
 import { container } from "tsyringe";
-import { ICacheService } from "../../../shared/cache/interfaces/cache-service.interface";
-import { RedisCacheService } from "../../../shared/cache/redis-cache.service";
-import { REDIS_CONFIG } from "../../../shared/config/redis.config";
+import { ICacheService } from "../../../shared/db/cache/interfaces/cache-service.interface";
+import { RedisCacheService } from "../../../shared/db/cache/redis-cache.service";
+import { REDIS_CONFIG } from "../../../shared/db/config/redis.config";
 
 describe("Cache Decorators", () => {
   let mockCacheService: jest.Mocked<ICacheService>;

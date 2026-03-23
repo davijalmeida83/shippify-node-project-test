@@ -8,8 +8,8 @@ import { AppError } from "../../../shared/errors/app-error";
 import { ToPublicUserService } from "./to-public-user.service";
 import { User } from "../domain/user";
 import { logger } from "../../../shared/utils/logger";
-import { InvalidateCache } from "../../../shared/cache/decorators/cache.decorator";
-import { REDIS_CONFIG } from "../../../shared/config/redis.config";
+import { InvalidateCache } from "../../../shared/db/cache/decorators/cache.decorator";
+import { REDIS_CONFIG } from "../../../shared/db/config/redis.config";
 
 @injectable()
 export class UpdateUserService {

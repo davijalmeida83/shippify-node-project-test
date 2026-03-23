@@ -4,8 +4,8 @@ import { USER_TOKENS } from "../user-tokens";
 import { PublicUserResponseDto } from "../dtos/Response/public-user-response.dto";
 import { ToPublicUserService } from "./to-public-user.service";
 import { logger } from "../../../shared/utils/logger";
-import { Cached } from "../../../shared/cache/decorators/cache.decorator";
-import { REDIS_CONFIG } from "../../../shared/config/redis.config";
+import { Cached } from "../../../shared/db/cache/decorators/cache.decorator";
+import { REDIS_CONFIG } from "../../../shared/db/config/redis.config";
 
 @injectable()
 export class GetAllUsersService {
