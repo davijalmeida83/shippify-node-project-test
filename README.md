@@ -260,6 +260,155 @@ Authorization: Bearer {token}
 - **Authentication JWT** - Proteção de rotas com tokens JWT
 - **Auditoria** - Todas as operações são registradas com histórico de mudanças
 - **Tratamento de erros** - Erros padronizados sem exposição de detalhes sensíveis
+- **Rate Limiting** - Proteção contra DDoS e força bruta com limites inteligentes
+
+### Rate Limiting (Proteção contra DDoS e Força Bruta) 🛡️
+
+A API implementa uma estratégia robusta de rate limiting com 4 níveis de proteção, prevenindo ataques DDoS e força bruta com suporte completo a IPv6.
+
+#### 📊 Estratégias de Rate Limiting
+
+| Tipo             | Limite                 | Aplicação                  | Objetivo                   |
+| ---------------- | ---------------------- | -------------------------- | -------------------------- |
+| **Global**       | 100 req/15min          | Todas as rotas             | Proteção geral contra DDoS |
+| **Autenticação** | 5 tentativas/15min     | `/api/auth/login`          | Força bruta em login       |
+| **Criação**      | 20 req/15min           | `POST /api/user/register`  | Spam de registros          |
+| **Sensível**     | 10 op/15min por IP+UID | `PUT/DELETE /api/user/:id` | Operações críticas         |
+
+#### 🌍 Rate Limiter Global
+
+```
+Limite: 100 requisições por 15 minutos por IP
+Aplicação: Todas as rotas (exceto /health)
+Headers: Retorna RateLimit-* com informações de limite
+Suporte: IPv4 e IPv6
+```
+
+#### 🔑 Rate Limiter de Autenticação
+
+```
+Limite: 5 tentativas por 15 minutos por IP
+Aplicação: POST /api/auth/login
+Objetivo: Proteção contra força bruta
+Contagem: Todas as requisições são contadas
+Suporte: IPv4 e IPv6
+```
+
+#### ➕ Rate Limiter de Criação
+
+```
+Limite: 20 requisições por 15 minutos por IP
+Aplicação: POST /api/user/register
+Objetivo: Prevenção de spam de registros
+Suporte: IPv4 e IPv6
+```
+
+#### ⚠️ Rate Limiter de Operações Sensíveis
+
+```
+Limite: 10 operações por 15 minutos por IP + User ID
+Aplicação: PUT /api/user/:id, DELETE /api/user/:id
+Objetivo: Proteção de operações críticas
+Rastreamento: Combinação de IP e ID do usuário para maior segurança
+Suporte: IPv4 e IPv6
+```
+
+#### Resposta ao Atingir Limite
+
+**Status Code: 429 (Too Many Requests)**
+
+```json
+{
+  "statusCode": 429,
+  "message": "Muitas requisições deste IP, tente novamente depois de 15 minutos"
+}
+```
+
+**Headers de Rate Limiting:**
+
+```
+RateLimit-Limit: 100
+RateLimit-Remaining: 95
+RateLimit-Reset: 1674193088
+Retry-After: 876
+```
+
+#### 🔧 Configuração Centralizada
+
+Todas as configurações de rate limiting estão centralizadas em um único arquivo para facilitar manutenção:
+
+**Arquivo: `src/shared/config/rate-limit.config.ts`**
+
+```typescript
+export const RATE_LIMIT_CONFIG = {
+  windowMs: 15 * 60 * 1000, // Janela de tempo: 15 minutos
+
+  global: {
+    max: 100, // 100 requisições
+    message: "Muitas requisições deste IP...",
+  },
+
+  auth: {
+    max: 5, // 5 tentativas
+    message: "Muitas tentativas de autenticação...",
+    skipSuccessfulRequests: false, // Contar todas
+  },
+
+  creation: {
+    max: 20, // 20 requisições
+    message: "Muitas requisições de criação...",
+  },
+
+  sensitive: {
+    max: 10, // 10 operações
+    message: "Muitas operações sensíveis...",
+  },
+};
+```
+
+**Arquivo: `src/shared/middleware/rate-limit.middleware.ts`**
+
+```typescript
+// Implementação dos 4 limitadores usando RATE_LIMIT_CONFIG
+export const globalRateLimiter = rateLimit({
+  windowMs: RATE_LIMIT_CONFIG.windowMs,
+  max: RATE_LIMIT_CONFIG.global.max,
+  message: RATE_LIMIT_CONFIG.global.message,
+  keyGenerator: getIpBasedKey, // Suporta IPv6
+  skip: shouldSkipRateLimit,
+});
+
+export const authRateLimiter = rateLimit({
+  windowMs: RATE_LIMIT_CONFIG.windowMs,
+  max: RATE_LIMIT_CONFIG.auth.max,
+  message: RATE_LIMIT_CONFIG.auth.message,
+  skipSuccessfulRequests: RATE_LIMIT_CONFIG.auth.skipSuccessfulRequests,
+  keyGenerator: getIpBasedKey,
+});
+
+// ... Mais limitadores
+```
+
+#### ✅ Vantagens da Implementação
+
+- **🔒 Proteção contra DDoS** - Limita requisições por IP
+- **🛡️ Prevenção de força bruta** - Limite reduzido em autenticação (5 tentativas)
+- **📊 Visibilidade total** - Headers padrão `RateLimit-*` informam cliente
+- **🎯 Estratégia granular** - Diferentes limites para diferentes tipos de operação
+- **⚡ Performance** - Store em memória com opção para Redis em produção
+- **🌐 Suporte IPv6** - Compatível com endereços IPv6 usando `ipKeyGenerator`
+- **🔧 Configuração centralizada** - Fácil de manter e ajustar
+- **📝 Bem documentado** - Código limpo e autodescritivo
+
+#### 🧪 Testes de Rate Limiting
+
+O rate limiting possui cobertura completa de testes:
+
+```bash
+npm test -- --testPathPatterns="rate-limit"
+```
+
+**Cobertura:** 100% statements, branches, functions e lines
 
 ### Campos Proibidos
 
