@@ -1,8 +1,8 @@
-name: CI - Testes Automatizados
+name: Coverage - Relatório de Cobertura
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_run:
+    workflows: ["Build - Compilação TypeScript"]
+    types: [completed]
     branches: [main]
 
 permissions:
@@ -11,7 +11,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  test:
+  coverage:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -23,8 +23,6 @@ jobs:
           node-version: "18"
       - name: Instalar dependências
         run: npm install --legacy-peer-deps
-      - name: Compilar TypeScript
-        run: npm run build
       - name: Executar testes
         run: npm test
       - name: Gerar relatório de cobertura
