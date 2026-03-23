@@ -1,0 +1,15 @@
+{
+  "name": "default",
+  "type": "mysql",
+  "host": "localhost",
+  "port": 3306,
+  "username": "shippify_user",
+  "password": "shippify_password",
+  "database": "shippify_db",
+  "synchronize": false,
+  "logging": false,
+  "entities": ["src/modules/**/domain/*.ts", "src/shared/db/entities/*.ts"],
+  "migrations": ["src/shared/db/migrations/*.ts"],
+  "subscribers": ["src/shared/db/subscribers/*.ts"],
+  "migrationsTableName": "typeorm_migrations"
+}

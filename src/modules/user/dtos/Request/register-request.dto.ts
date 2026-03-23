@@ -1,0 +1,19 @@
+import { IsEmail, IsNotEmpty, MinLength, MaxLength } from "class-validator";
+import { Expose } from "class-transformer";
+
+export class RegisterRequestDto {
+  @Expose()
+  @IsNotEmpty({ message: "Name is required" })
+  @MaxLength(255, { message: "Name must not exceed 255 characters" })
+  name!: string;
+
+  @Expose()
+  @IsNotEmpty({ message: "Email is required" })
+  @IsEmail({}, { message: "Invalid email format" })
+  email!: string;
+
+  @Expose()
+  @IsNotEmpty({ message: "Password is required" })
+  @MinLength(6, { message: "Password must be at least 6 characters long" })
+  password!: string;
+}
