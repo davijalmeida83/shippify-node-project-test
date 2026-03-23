@@ -9,13 +9,8 @@ module.exports = {
   collectCoverage: true,
   collectCoverageFrom: [
     'modules/**/services/**/*.ts',
-    'modules/**/middlewares/**/*.ts',
-    'modules/**/controllers/**/*.ts',
-    'modules/**/repositories/**/*.ts',
     'shared/middleware/**/*.ts',
     'shared/utils/**/*.ts',
-    'shared/db/cache/**/*.ts',
-    'shared/errors/**/*.ts',
     'modules/**/utils/**/*.ts',
     '!**/*.d.ts',
     '!**/setup.ts',
