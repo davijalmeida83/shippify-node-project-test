@@ -1,5 +1,5 @@
-import { RedisCacheService } from "../../../shared/cache/redis-cache.service";
-import { REDIS_CONFIG } from "../../../shared/config/redis.config";
+import { RedisCacheService } from "../../../shared/db/cache/redis-cache.service";
+import { REDIS_CONFIG } from "../../../shared/db/config/redis.config";
 
 describe("RedisCacheService", () => {
   let cacheService: RedisCacheService;

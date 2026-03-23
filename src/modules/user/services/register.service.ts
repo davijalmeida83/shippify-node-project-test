@@ -12,8 +12,8 @@ import { RegisterRequestDto } from "../dtos/Request/register-request.dto";
 import { USER_TOKENS } from "../user-tokens";
 import { AUTH_TOKENS } from "../../auth/auth-tokens";
 import { logger } from "../../../shared/utils/logger";
-import { InvalidateCache } from "../../../shared/cache/decorators/cache.decorator";
-import { REDIS_CONFIG } from "../../../shared/config/redis.config";
+import { InvalidateCache } from "../../../shared/db/cache/decorators/cache.decorator";
+import { REDIS_CONFIG } from "../../../shared/db/config/redis.config";
 
 @injectable()
 export class RegisterService {

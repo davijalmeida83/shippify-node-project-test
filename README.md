@@ -126,120 +126,29 @@ Ambos os serviços estabelecem uma conexão segura através de uma rede Docker i
 
 #### Login
 
-```bash
-POST /shippify-api/v1/auth/login
-Content-Type: application/json
+A documentação e exemplos de consumo estão disponíveis no Swagger UI:
 
-{
-  "email": "usuario@example.com",
-  "password": "sua-senha"
-}
 ```
-
-**Resposta (200 OK):**
-
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "id": "306e4c7d-98c9-4b0b-b823-654364a56cb8",
-    "name": "João Silva",
-    "email": "usuario@example.com"
-  }
-}
+http://localhost:3000/api-docs
 ```
 
 ### Usuários
 
 #### Registrar novo usuário
 
-```bash
-POST /shippify-api/v1/user/register
-Content-Type: application/json
-
-{
-  "name": "João Silva",
-  "email": "joao@example.com",
-  "password": "senha-segura@123"
-}
-```
-
-**Resposta (201 Created):**
-
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "id": "306e4c7d-98c9-4b0b-b823-654364a56cb8",
-    "name": "João Silva",
-    "email": "joao@example.com"
-  }
-}
-```
+Consulte o Swagger UI para exemplos de requisição e resposta.
 
 #### Listar todos os usuários
 
-```bash
-GET /shippify-api/v1/user
-Authorization: Bearer {token}
-```
-
-**Resposta (200 OK):**
-
-```json
-[
-  {
-    "id": "306e4c7d-98c9-4b0b-b823-654364a56cb8",
-    "name": "João Silva",
-    "email": "joao@example.com"
-  },
-  {
-    "id": "42a8b3f1-2c5d-4e9a-8b7c-1d3e5f7a9b2c",
-    "name": "Maria Santos",
-    "email": "maria@example.com"
-  }
-]
-```
+Consulte o Swagger UI para exemplos de requisição e resposta.
 
 #### Obter usuário por ID
 
-```bash
-GET /shippify-api/v1/user/{id}
-Authorization: Bearer {token}
-```
-
-**Resposta (200 OK):**
-
-```json
-{
-  "id": "306e4c7d-98c9-4b0b-b823-654364a56cb8",
-  "name": "João Silva",
-  "email": "joao@example.com"
-}
-```
+Consulte o Swagger UI para exemplos de requisição e resposta.
 
 #### Atualizar usuário
 
-```bash
-PUT /shippify-api/v1/user/{id}
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-  "name": "João Silva Atualizado",
-  "email": "joao.novo@example.com"
-}
-```
-
-**Resposta (200 OK):**
-
-```json
-{
-  "id": "306e4c7d-98c9-4b0b-b823-654364a56cb8",
-  "name": "João Silva Atualizado",
-  "email": "joao.novo@example.com"
-}
-```
+Consulte o Swagger UI para exemplos de requisição e resposta.
 
 #### Deletar usuário
 
@@ -249,6 +158,39 @@ Authorization: Bearer {token}
 ```
 
 **Resposta (204 No Content)**
+
+Consulte o Swagger UI para exemplos de requisição e resposta.
+
+## 🔌 Documentação de Endpoints
+
+### 📖 Acessar Swagger da API
+
+A documentação completa de todos os endpoints está disponível no **Swagger UI** da aplicação.
+
+Após iniciar a aplicação, acesse a documentação interativa em:
+
+```
+http://localhost:3000/api-docs
+```
+
+No Swagger UI você pode:
+
+- ✅ Visualizar todos os endpoints disponíveis
+- ✅ Ver os schemas de request e response
+- ✅ Testar os endpoints diretamente
+- ✅ Autenticar com JWT para testar rotas protegidas
+- ✅ Consultar códigos de erro e validações
+
+### Principais Endpoints
+
+| Método   | Rota                             | Descrição                |
+| -------- | -------------------------------- | ------------------------ |
+| `POST`   | `/shippify-api/v1/auth/login`    | Login de usuário         |
+| `POST`   | `/shippify-api/v1/user/register` | Registrar novo usuário   |
+| `GET`    | `/shippify-api/v1/user`          | Listar todos os usuários |
+| `GET`    | `/shippify-api/v1/user/{id}`     | Obter usuário por ID     |
+| `PUT`    | `/shippify-api/v1/user/{id}`     | Atualizar usuário        |
+| `DELETE` | `/shippify-api/v1/user/{id}`     | Deletar usuário          |
 
 ## 🔐 Segurança
 
@@ -620,13 +562,13 @@ O código está **100% alinhado com SOLID**:
 
 ## 🧪 Testes Unitários
 
-O projeto implementa testes unitários abrangentes cobrindo **todos os serviços, middlewares e utilitários** com **95 testes**, alcançando **100% de cobertura** em statements, branches, functions e lines.
+O projeto implementa testes unitários abrangentes cobrindo **todos os serviços, middlewares e utilitários** com **118 testes**, alcançando **100% de cobertura** em statements, branches, functions e lines.
 
 ### 📊 Cobertura de Testes - 100% ✅
 
 ```
-Test Suites: 13 passed, 13 total
-Tests:       95 passed, 95 total
+Test Suites: 16 passed, 16 total
+Tests:       118 passed, 118 total
 Statements:  100%
 Branches:    100%
 Functions:   100%
@@ -645,21 +587,25 @@ src/test/
 │   │   ├── middlewares/
 │   │   │   └── ensure-authenticated.test.ts    # 9 testes
 │   │   └── utils/
-│   │       └── password.util.test.ts           # 9 testes
+│   │       └── password.util.test.ts           # 11 testes
 │   └── user/
 │       └── services/
-│           ├── register.service.test.ts        # 7 testes
+│           ├── register.service.test.ts        # 4 testes
 │           ├── delete-user.service.test.ts     # 4 testes
 │           ├── update-user.service.test.ts     # 6 testes
 │           ├── get-all-users.service.test.ts   # 3 testes
 │           ├── get-user-by-id.service.test.ts  # 4 testes
 │           └── to-public-user.service.test.ts  # 3 testes
 └── shared/
+    ├── cache/
+    │   ├── redis-cache.service.test.ts         # 9 testes
+    │   └── cache.decorator.test.ts             # 10 testes
     ├── middleware/
     │   ├── error-handler.middleware.test.ts    # 8 testes
-    │   └── validation.middleware.test.ts       # 11 testes
+    │   ├── validation.middleware.test.ts       # 11 testes
+    │   └── rate-limit.middleware.test.ts       # 16 testes
     └── utils/
-        └── logger.util.test.ts                 # 24 testes
+        └── logger.util.test.ts                 # 12 testes
 ```
 
 ### Cobertura Detalhada de Testes
@@ -672,19 +618,23 @@ src/test/
 | **Auth Middlewares**   |                                  |        |           |
 |                        | ensure-authenticated.test.ts     | 9      | ✅ 100%   |
 | **Auth Utils**         |                                  |        |           |
-|                        | password.util.test.ts            | 9      | ✅ 100%   |
+|                        | password.util.test.ts            | 11     | ✅ 100%   |
 | **User Services**      |                                  |        |           |
-|                        | register.service.test.ts         | 7      | ✅ 100%   |
+|                        | register.service.test.ts         | 4      | ✅ 100%   |
 |                        | delete-user.service.test.ts      | 4      | ✅ 100%   |
 |                        | update-user.service.test.ts      | 6      | ✅ 100%   |
 |                        | get-all-users.service.test.ts    | 3      | ✅ 100%   |
 |                        | get-user-by-id.service.test.ts   | 4      | ✅ 100%   |
 |                        | to-public-user.service.test.ts   | 3      | ✅ 100%   |
+| **Shared Cache**       |                                  |        |           |
+|                        | redis-cache.service.test.ts      | 9      | ✅ 100%   |
+|                        | cache.decorator.test.ts          | 10     | ✅ 100%   |
 | **Shared Middlewares** |                                  |        |           |
 |                        | error-handler.middleware.test.ts | 8      | ✅ 100%   |
 |                        | validation.middleware.test.ts    | 11     | ✅ 100%   |
+|                        | rate-limit.middleware.test.ts    | 16     | ✅ 100%   |
 | **Shared Utils**       |                                  |        |           |
-|                        | logger.util.test.ts              | 24     | ✅ 100%   |
+|                        | logger.util.test.ts              | 12     | ✅ 100%   |
 
 ### Executar Testes
 
@@ -751,7 +701,7 @@ A API utiliza Redis para cache em memória, melhorando significativamente a perf
 Armazena o resultado de uma função/método no Redis:
 
 ```typescript
-import { Cached } from "@shared/cache/decorators";
+import { Cached } from "@shared/db/cache/decorators";
 
 @injectable()
 export class UserService {

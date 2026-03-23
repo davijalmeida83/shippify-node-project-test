@@ -1,7 +1,7 @@
 import { container } from "tsyringe";
 import { ICacheService } from "../interfaces/cache-service.interface";
 import { REDIS_CONFIG } from "../../config/redis.config";
-import { logger } from "../../utils/logger";
+import { logger } from "../../../utils/logger";
 
 export interface CacheOptions {
   key: string;
