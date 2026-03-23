@@ -1,16 +1,16 @@
-# Code Owners - Este arquivo define quem deve revisar as mudanças
+# Code Owners - Arquivo que define quem deve revisar as mudancas
 
-# Todas as mudanças requerem aprovação de Code Owner antes de fazer merge
+# Todos os arquivos requerem aprovacao de Code Owner antes de fazer merge
 
-# Owner padrão para todos os arquivos
+# Owner padrao para TODOS os arquivos
 
 - @davijalmeida83
 
-# Workflows de CI/CD - requerem revisão extra
+# Workflows de CI/CD - requerem revisao obrigatoria
 
 .github/workflows/\* @davijalmeida83
 
-# Configurações críticas
+# Configuracoes criticas
 
 tsconfig.json @davijalmeida83
 jest.config.js @davijalmeida83

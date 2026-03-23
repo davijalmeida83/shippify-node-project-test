@@ -719,7 +719,7 @@ Para que o Coverage funcione e comente no PR, configure:
    - No PR, clique em "Checks" para ver status
    - Coverage comenta automaticamente no PR com resumo
 
-## Protecao de Branch e Code Review
+## Proteção de Branch e Code Review
 
 ### GitHub Rulesets (Branch Protection)
 
@@ -729,9 +729,9 @@ A branch `main` é protegida por GitHub Rulesets que garantem qualidade e segura
 
 ✅ **Require a pull request before merging**
 
-- Obriga criacao de PR para fazer merge
-- Requer aprovacao de Code Owner (@davijalmeida83)
-- PR authors nao conseguem aprovar seu proprio PR
+- Obriga criação de PR para fazer merge
+- Requer aprovação de Code Owner (@davijalmeida83)
+- PR authors não conseguem aprovar seu próprio PR
 
 ✅ **Require status checks to pass before merging**
 
@@ -746,29 +746,29 @@ A branch `main` é protegida por GitHub Rulesets que garantem qualidade e segura
 
 ✅ **Require conversation resolution before merging**
 
-- Comentarios no PR devem ser resolvidos
+- Comentários no PR devem ser resolvidos
 - Garante que feedback foi considerado
 
-### CODEOWNERS - Code Review Obrigatorio
+### CODEOWNERS - Code Review Obrigatório
 
-O arquivo `.github/CODEOWNERS` define quem deve revisar as mudancas:
+O arquivo [.github/CODEOWNERS](.github/CODEOWNERS) define automaticamente quem deve revisar as mudanças em cada parte do código.
 
-```
-# Todos os arquivos requerem aprovacao de:
-* @davijalmeida83
+**Como funciona:**
 
-# Workflows de CI/CD - requerem revisao extra
-.github/workflows/* @davijalmeida83
+- Quando você abre um PR, o GitHub lê o arquivo CODEOWNERS
+- Identifica quais arquivos foram alterados
+- Automaticamente adiciona os Code Owners como **Requested reviewers**
+- O merge só é permitido após aprovação deles
 
-# Configuracoes criticas
-tsconfig.json @davijalmeida83
-jest.config.js @davijalmeida83
-package.json @davijalmeida83
-```
+**Configuração atual:**
 
-**Resultado**: Qualquer PR precisa de aprovacao do owner antes de fazer merge!
+- `* @davijalmeida83` - Todos os arquivos requerem sua aprovação
+- `.github/workflows/* @davijalmeida83` - Workflows requerem revisão
+- Arquivos críticos (`tsconfig.json`, `jest.config.js`, `package.json`) requerem sua aprovação
 
-### Workflow de Desenvolvimento com Seguranca
+**Resultado**: Qualquer mudança precisa passar por Code Review antes de fazer merge!
+
+### Workflow de Desenvolvimento com Segurança
 
 #### Passo 1: Crie uma branch
 
@@ -776,12 +776,12 @@ package.json @davijalmeida83
 git checkout -b feat/sua-feature
 ```
 
-#### Passo 2: Faça suas mudancas
+#### Passo 2: Faça suas mudanças
 
 ```bash
 # Edite arquivos, faça commits
 git add .
-git commit -m "feat: descricao da mudanca"
+git commit -m "feat: descrição da mudança"
 ```
 
 #### Passo 3: Push para remota
@@ -794,13 +794,13 @@ git push origin feat/sua-feature
 
 - Vá para GitHub
 - Clique em "Compare & pull request"
-- Preencha titulo e descricao
+- Preencha título e descrição
 
 #### Passo 5: Aguarde Workflows
 
-- Build workflow executa (compilacao)
+- Build workflow executa (compilação)
 - Coverage workflow executa (testes + cobertura)
-- Se ambos passarem, um comentario com resumo aparece
+- Se ambos passarem, um comentário com resumo aparece
 
 #### Passo 6: Code Review
 
@@ -819,20 +819,20 @@ git checkout main
 git pull origin main
 ```
 
-### Restricoes de Push Direto
+### Restrições de Push Direto
 
-**IMPORTANTE**: Nao e possivel fazer push direto na branch main:
+**IMPORTANTE**: Não é possível fazer push direto na branch main:
 
 ```bash
 git push origin main
 # ERROR: Pushing to this branch requires pull request and review
 ```
 
-Isso garante que TODAS as mudancas passem por:
+Isso garante que TODAS as mudanças passem por:
 
-1. Compilacao (build workflow)
+1. Compilação (build workflow)
 2. Testes (coverage workflow)
-3. Code review (aprovacao)
+3. Code review (aprovação)
 
 ## Logging
 
