@@ -12,6 +12,8 @@ import { RegisterRequestDto } from "../dtos/Request/register-request.dto";
 import { USER_TOKENS } from "../user-tokens";
 import { AUTH_TOKENS } from "../../auth/auth-tokens";
 import { logger } from "../../../shared/utils/logger";
+import { InvalidateCache } from "../../../shared/cache/decorators/cache.decorator";
+import { REDIS_CONFIG } from "../../../shared/config/redis.config";
 
 @injectable()
 export class RegisterService {
@@ -29,12 +31,7 @@ export class RegisterService {
     private readonly tokenService: TokenService
   ) {}
 
-  /**
-   * Registra um novo usuário no sistema
-   * @param input Dados de entrada para registro (email, nome, senha)
-   * @returns Token JWT e dados públicos do usuário registrado
-   * @throws AppError Se o email já estiver registrado
-   */
+  @InvalidateCache(REDIS_CONFIG.keyPrefix.userList)
   public async execute(input: RegisterRequestDto): Promise<AuthResponseDto> {
     logger.info(`[RegisterService] Iniciando registro para email: ${input.email}`);
     

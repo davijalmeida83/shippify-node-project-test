@@ -4,6 +4,8 @@ import { IUserPersistence } from "../repositories/interfaces/user-persistence.in
 import { USER_TOKENS } from "../user-tokens";
 import { AppError } from "../../../shared/errors/app-error";
 import { logger } from "../../../shared/utils/logger";
+import { InvalidateCache } from "../../../shared/cache/decorators/cache.decorator";
+import { REDIS_CONFIG } from "../../../shared/config/redis.config";
 
 @injectable()
 export class DeleteUserService {
@@ -15,11 +17,7 @@ export class DeleteUserService {
     private readonly userPersistence: IUserPersistence
   ) {}
 
-  /**
-   * Deleta um usuário do sistema
-   * @param id Identificador único do usuário a ser deletado
-   * @throws AppError Se o usuário não for encontrado
-   */
+  @InvalidateCache([REDIS_CONFIG.keyPrefix.userList, `${REDIS_CONFIG.keyPrefix.user}{{0}}`])
   public async execute(id: string): Promise<void> {
     logger.info(`[DeleteUserService] Buscando usuário: ${id}`);
     const user = await this.userFinder.findById(id);

@@ -5,6 +5,8 @@ import { PublicUserResponseDto } from "../dtos/Response/public-user-response.dto
 import { AppError } from "../../../shared/errors/app-error";
 import { ToPublicUserService } from "./to-public-user.service";
 import { logger } from "../../../shared/utils/logger";
+import { Cached } from "../../../shared/cache/decorators/cache.decorator";
+import { REDIS_CONFIG } from "../../../shared/config/redis.config";
 
 @injectable()
 export class GetUserByIdService {
@@ -16,12 +18,10 @@ export class GetUserByIdService {
     private readonly toPublicUserService: ToPublicUserService
   ) {}
 
-  /**
-   * Retorna um usuário específico pelo ID
-   * @param id Identificador único do usuário
-   * @returns Dados públicos do usuário
-   * @throws AppError Se o usuário não for encontrado
-   */
+  @Cached({
+    key: `${REDIS_CONFIG.keyPrefix.user}{{0}}`,
+    ttl: REDIS_CONFIG.ttl.user,
+  })
   public async execute(id: string): Promise<PublicUserResponseDto> {
     logger.info(`[GetUserByIdService] Buscando usuário: ${id}`);
     const user = await this.userFinder.findById(id);

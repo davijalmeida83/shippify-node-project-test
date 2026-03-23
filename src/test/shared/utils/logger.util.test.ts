@@ -4,315 +4,175 @@ describe("Logger Util", () => {
   let consoleInfoSpy: jest.SpyInstance;
   let consoleWarnSpy: jest.SpyInstance;
   let consoleErrorSpy: jest.SpyInstance;
+  let consoleDebugSpy: jest.SpyInstance;
 
   beforeEach(() => {
     consoleInfoSpy = jest.spyOn(console, "info").mockImplementation();
     consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation();
     consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+    consoleDebugSpy = jest.spyOn(console, "debug").mockImplementation();
   });
 
   afterEach(() => {
     consoleInfoSpy.mockRestore();
     consoleWarnSpy.mockRestore();
     consoleErrorSpy.mockRestore();
+    consoleDebugSpy.mockRestore();
+    delete process.env.DEBUG;
   });
 
-  describe("info", () => {
-    it("should log info message with [INFO] prefix", () => {
-      // Act
-      logger.info("Application started");
+  describe("Basic logging methods (info, warn, error)", () => {
+    it("should log messages with correct prefixes", () => {
+      logger.info("App started");
+      logger.warn("Warning message");
+      logger.error("Error occurred");
 
-      // Assert
-      expect(consoleInfoSpy).toHaveBeenCalledWith("[INFO]: Application started");
+      expect(consoleInfoSpy).toHaveBeenCalledWith("[INFO]: App started");
+      expect(consoleWarnSpy).toHaveBeenCalledWith("[WARN]: Warning message");
+      expect(consoleErrorSpy).toHaveBeenCalledWith("[ERROR]: Error occurred");
     });
 
-    it("should log info message with additional parameters", () => {
-      // Arrange
-      const userId = 123;
-      const action = "login";
+    it("should handle additional parameters for all methods", () => {
+      const param1 = { userId: 123 };
+      const param2 = "context";
 
-      // Act
-      logger.info("User action", { userId, action });
+      logger.info("User action", param1, param2);
+      logger.warn("Deprecation", param1);
+      logger.error("Failed request", param1, param2);
 
-      // Assert
-      expect(consoleInfoSpy).toHaveBeenCalledWith(
-        "[INFO]: User action",
-        { userId, action }
-      );
+      expect(consoleInfoSpy).toHaveBeenCalledWith("[INFO]: User action", param1, param2);
+      expect(consoleWarnSpy).toHaveBeenCalledWith("[WARN]: Deprecation", param1);
+      expect(consoleErrorSpy).toHaveBeenCalledWith("[ERROR]: Failed request", param1, param2);
     });
 
-    it("should log info message with multiple optional parameters", () => {
-      // Arrange
-      const param1 = { key: "value" };
-      const param2 = "string param";
-      const param3 = 42;
+    it("should handle null and undefined parameters", () => {
+      logger.info("Message", null);
+      logger.warn("Message", undefined);
+      logger.error("Message", null, undefined);
 
-      // Act
-      logger.info("Complex log", param1, param2, param3);
-
-      // Assert
-      expect(consoleInfoSpy).toHaveBeenCalledWith(
-        "[INFO]: Complex log",
-        param1,
-        param2,
-        param3
-      );
-    });
-
-    it("should handle empty optional parameters", () => {
-      // Act
-      logger.info("Message without params");
-
-      // Assert
-      expect(consoleInfoSpy).toHaveBeenCalledWith("[INFO]: Message without params");
-    });
-
-    it("should handle special characters in message", () => {
-      // Act
-      logger.info("Special chars: !@#$%^&*()");
-
-      // Assert
-      expect(consoleInfoSpy).toHaveBeenCalledWith("[INFO]: Special chars: !@#$%^&*()");
+      expect(consoleInfoSpy).toHaveBeenCalledWith("[INFO]: Message", null);
+      expect(consoleWarnSpy).toHaveBeenCalledWith("[WARN]: Message", undefined);
+      expect(consoleErrorSpy).toHaveBeenCalledWith("[ERROR]: Message", null, undefined);
     });
   });
 
-  describe("warn", () => {
-    it("should log warn message with [WARN] prefix", () => {
-      // Act
-      logger.warn("Deprecation warning");
-
-      // Assert
-      expect(consoleWarnSpy).toHaveBeenCalledWith("[WARN]: Deprecation warning");
+  describe("Debug method with DEBUG environment variable", () => {
+    it("should log debug message when DEBUG=true", () => {
+      process.env.DEBUG = "true";
+      logger.debug("Debug message");
+      expect(consoleDebugSpy).toHaveBeenCalledWith("[DEBUG]: Debug message");
     });
 
-    it("should log warn message with additional parameters", () => {
-      // Arrange
-      const deprecated = "oldFunction";
-      const replacement = "newFunction";
+    it("should not log debug message when DEBUG is not true", () => {
+      logger.debug("Debug message");
+      expect(consoleDebugSpy).not.toHaveBeenCalled();
 
-      // Act
-      logger.warn("Function deprecated", { deprecated, replacement });
-
-      // Assert
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        "[WARN]: Function deprecated",
-        { deprecated, replacement }
-      );
+      process.env.DEBUG = "false";
+      logger.debug("Debug message 2");
+      expect(consoleDebugSpy).not.toHaveBeenCalled();
     });
 
-    it("should log warn message with multiple optional parameters", () => {
-      // Arrange
-      const errorContext = { code: 500 };
-      const timestamp = new Date();
+    it("should respect DEBUG variable dynamically", () => {
+      logger.debug("Msg 1");
+      expect(consoleDebugSpy).not.toHaveBeenCalled();
 
-      // Act
-      logger.warn("Warning occurred", errorContext, timestamp);
+      process.env.DEBUG = "true";
+      consoleDebugSpy.mockClear();
+      logger.debug("Msg 2");
+      expect(consoleDebugSpy).toHaveBeenCalledWith("[DEBUG]: Msg 2");
 
-      // Assert
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        "[WARN]: Warning occurred",
-        errorContext,
-        timestamp
-      );
+      delete process.env.DEBUG;
+      consoleDebugSpy.mockClear();
+      logger.debug("Msg 3");
+      expect(consoleDebugSpy).not.toHaveBeenCalled();
     });
 
-    it("should handle empty optional parameters", () => {
-      // Act
-      logger.warn("Warning message only");
+    it("should handle parameters when DEBUG=true", () => {
+      process.env.DEBUG = "true";
+      const param1 = { level: 5 };
+      const param2 = "context";
 
-      // Assert
-      expect(consoleWarnSpy).toHaveBeenCalledWith("[WARN]: Warning message only");
-    });
-
-    it("should handle array as optional parameter", () => {
-      // Arrange
-      const items = [1, 2, 3, 4, 5];
-
-      // Act
-      logger.warn("Multiple items", items);
-
-      // Assert
-      expect(consoleWarnSpy).toHaveBeenCalledWith("[WARN]: Multiple items", items);
+      logger.debug("Debug info", param1, param2);
+      expect(consoleDebugSpy).toHaveBeenCalledWith("[DEBUG]: Debug info", param1, param2);
     });
   });
 
-  describe("error", () => {
-    it("should log error message with [ERROR] prefix", () => {
-      // Act
-      logger.error("Database connection failed");
-
-      // Assert
-      expect(consoleErrorSpy).toHaveBeenCalledWith("[ERROR]: Database connection failed");
-    });
-
-    it("should log error message with error object as parameter", () => {
-      // Arrange
-      const error = new Error("Something went wrong");
-
-      // Act
-      logger.error("An error occurred", error);
-
-      // Assert
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "[ERROR]: An error occurred",
-        error
-      );
-    });
-
-    it("should log error message with error context and stack", () => {
-      // Arrange
-      const context = {
-        endpoint: "/api/users",
-        method: "POST",
-      };
-      const stack = "Error: at Function.js:10:5";
-
-      // Act
-      logger.error("API error", context, stack);
-
-      // Assert
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "[ERROR]: API error",
-        context,
-        stack
-      );
-    });
-
-    it("should handle empty optional parameters", () => {
-      // Act
-      logger.error("Critical error");
-
-      // Assert
-      expect(consoleErrorSpy).toHaveBeenCalledWith("[ERROR]: Critical error");
-    });
-
-    it("should handle multiple optional parameters for error logging", () => {
-      // Arrange
-      const errorCode = "E001";
-      const timestamp = new Date().toISOString();
-      const userId = "user-123";
-
-      // Act
-      logger.error("User action failed", errorCode, timestamp, userId);
-
-      // Assert
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "[ERROR]: User action failed",
-        errorCode,
-        timestamp,
-        userId
-      );
-    });
-
-    it("should handle null as optional parameter", () => {
-      // Act
-      logger.error("Error with null context", null);
-
-      // Assert
-      expect(consoleErrorSpy).toHaveBeenCalledWith("[ERROR]: Error with null context", null);
-    });
-
-    it("should handle undefined as optional parameter", () => {
-      // Act
-      logger.error("Error with undefined", undefined);
-
-      // Assert
-      expect(consoleErrorSpy).toHaveBeenCalledWith("[ERROR]: Error with undefined", undefined);
-    });
-  });
-
-  describe("Logger consistency", () => {
-    it("should use consistent [PREFIX]: format across all methods", () => {
-      // Act
-      logger.info("Info message");
-      logger.warn("Warn message");
-      logger.error("Error message");
-
-      // Assert
-      expect(consoleInfoSpy).toHaveBeenCalledWith("[INFO]: Info message");
-      expect(consoleWarnSpy).toHaveBeenCalledWith("[WARN]: Warn message");
-      expect(consoleErrorSpy).toHaveBeenCalledWith("[ERROR]: Error message");
-    });
-
-    it("should preserve parameter order in all methods", () => {
-      // Arrange
-      const param1 = "first";
-      const param2 = { second: "object" };
-      const param3 = 123;
-
-      // Act
-      logger.info("Test", param1, param2, param3);
-      logger.warn("Test", param1, param2, param3);
-      logger.error("Test", param1, param2, param3);
-
-      // Assert
-      expect(consoleInfoSpy).toHaveBeenCalledWith("[INFO]: Test", param1, param2, param3);
-      expect(consoleWarnSpy).toHaveBeenCalledWith("[WARN]: Test", param1, param2, param3);
-      expect(consoleErrorSpy).toHaveBeenCalledWith("[ERROR]: Test", param1, param2, param3);
-    });
-
-    it("should all methods call their respective console methods", () => {
-      // Act
+  describe("Logger consistency across methods", () => {
+    it("should use consistent [PREFIX]: format", () => {
+      process.env.DEBUG = "true";
       logger.info("Info");
       logger.warn("Warn");
       logger.error("Error");
+      logger.debug("Debug");
 
-      // Assert
-      expect(consoleInfoSpy).toHaveBeenCalled();
-      expect(consoleWarnSpy).toHaveBeenCalled();
-      expect(consoleErrorSpy).toHaveBeenCalled();
+      expect(consoleInfoSpy).toHaveBeenCalledWith("[INFO]: Info");
+      expect(consoleWarnSpy).toHaveBeenCalledWith("[WARN]: Warn");
+      expect(consoleErrorSpy).toHaveBeenCalledWith("[ERROR]: Error");
+      expect(consoleDebugSpy).toHaveBeenCalledWith("[DEBUG]: Debug");
+    });
+
+    it("should preserve parameter order across methods", () => {
+      process.env.DEBUG = "true";
+      const p1 = "first";
+      const p2 = { second: true };
+
+      logger.info("Msg", p1, p2);
+      logger.warn("Msg", p1, p2);
+      logger.error("Msg", p1, p2);
+      logger.debug("Msg", p1, p2);
+
+      [consoleInfoSpy, consoleWarnSpy, consoleErrorSpy, consoleDebugSpy].forEach(
+        (spy, idx) => {
+          const prefix = ["INFO", "WARN", "ERROR", "DEBUG"][idx];
+          expect(spy).toHaveBeenCalledWith(`[${prefix}]: Msg`, p1, p2);
+        }
+      );
     });
   });
 
-  describe("Logger edge cases", () => {
-    it("should handle very long messages", () => {
-      // Arrange
-      const longMessage = "A".repeat(1000);
+  describe("Edge cases", () => {
+    it("should handle very long, empty, and special character messages", () => {
+      const longMsg = "A".repeat(1000);
+      const emptyMsg = "";
+      const specialMsg = "!@#$%^&*()";
 
-      // Act
-      logger.info(longMessage);
+      logger.info(longMsg);
+      logger.warn(emptyMsg);
+      logger.error(specialMsg);
 
-      // Assert
-      expect(consoleInfoSpy).toHaveBeenCalledWith(`[INFO]: ${longMessage}`);
+      expect(consoleInfoSpy).toHaveBeenCalledWith(`[INFO]: ${longMsg}`);
+      expect(consoleWarnSpy).toHaveBeenCalledWith(`[WARN]: ${emptyMsg}`);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(`[ERROR]: ${specialMsg}`);
     });
 
-    it("should handle messages with newlines", () => {
-      // Act
-      logger.error("Error message\nwith newlines");
+    it("should handle messages with newlines and special objects", () => {
+      logger.info("Line 1\nLine 2");
 
-      // Assert
-      expect(consoleErrorSpy).toHaveBeenCalledWith("[ERROR]: Error message\nwith newlines");
+      const circularObj: any = { name: "test" };
+      circularObj.self = circularObj;
+      logger.warn("Circular ref", circularObj);
+
+      expect(consoleInfoSpy).toHaveBeenCalledWith("[INFO]: Line 1\nLine 2");
+      expect(consoleWarnSpy).toHaveBeenCalledWith("[WARN]: Circular ref", circularObj);
     });
 
-    it("should handle complex nested objects", () => {
-      // Arrange
-      const complexObject = {
-        level1: {
-          level2: {
-            level3: {
-              data: [1, 2, 3],
-              status: "nested",
-            },
-          },
-        },
-      };
+    it("should handle all data types as parameters", () => {
+      process.env.DEBUG = "true";
+      const dataTypes = [
+        true,
+        false,
+        0,
+        -1,
+        3.14,
+        "string",
+        Symbol("sym"),
+        () => {},
+        [],
+        {},
+      ];
 
-      // Act
-      logger.warn("Complex object", complexObject);
-
-      // Assert
-      expect(consoleWarnSpy).toHaveBeenCalledWith("[WARN]: Complex object", complexObject);
-    });
-
-    it("should handle circular references safely", () => {
-      // Arrange
-      const obj: any = {};
-      obj.self = obj;
-
-      // Act & Assert - should not throw
-      expect(() => {
-        logger.info("Circular reference", obj);
-      }).not.toThrow();
+      logger.debug("Types", ...dataTypes);
+      expect(consoleDebugSpy).toHaveBeenCalledWith("[DEBUG]: Types", ...dataTypes);
     });
   });
 });

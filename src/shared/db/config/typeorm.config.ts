@@ -1,13 +1,13 @@
 import { DataSource } from "typeorm";
 import dotenv from "dotenv";
+import path from "path";
 import { logger } from "../../utils/logger";
 
 dotenv.config();
 
-// Carrega ormconfig.json com valores padrão
-const ormConfig = require("./ormconfig.json");
+const ormConfigPath = path.resolve(__dirname, "ormconfig.json");
+const ormConfig = require(ormConfigPath);
 
-// Sobrescreve com variáveis de ambiente
 const dataSourceOptions = {
   ...ormConfig,
   host: process.env.DB_HOST || ormConfig.host,
@@ -29,6 +29,7 @@ export const initializeDataSource = async () => {
       isDataSourceInitialized = true;
     } catch (err) {
       logger.error("Erro durante a inicialização do DataSource", err);
+      throw err;
     }
   }
 };

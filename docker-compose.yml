@@ -16,6 +16,27 @@ services:
       - mysql_data:/var/lib/mysql
     networks:
       - app_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_container
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 10s
+      retries: 10
+      interval: 5s
 
   backend:
     build:
@@ -23,17 +44,29 @@ services:
       dockerfile: Dockerfile
     container_name: backend_container
     restart: always
+    env_file: .env.docker
+    environment:
+      REDIS_ENABLED: "true"
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
     ports:
       - "3000:3000"
     volumes:
       - .:/usr/src/app
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
     networks:
       - app_network
 
 volumes:
   mysql_data:
+    driver: local
+  redis_data:
     driver: local
 
 networks:

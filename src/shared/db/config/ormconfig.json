@@ -8,8 +8,11 @@
   "database": "shippify_db",
   "synchronize": false,
   "logging": false,
-  "entities": ["src/modules/**/domain/*.ts", "src/shared/db/entities/*.ts"],
-  "migrations": ["src/shared/db/migrations/*.ts"],
-  "subscribers": ["src/shared/db/subscribers/*.ts"],
+  "entities": ["dist/modules/**/domain/*.js", "dist/shared/db/entities/*.js"],
+  "migrations": ["dist/shared/db/migrations/*.js"],
+  "subscribers": [
+    "dist/shared/db/subscribers/*.js",
+    "dist/modules/**/subscribers/*.js"
+  ],
   "migrationsTableName": "typeorm_migrations"
 }
