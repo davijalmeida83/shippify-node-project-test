@@ -1,5 +1,9 @@
 name: Coverage - Relatório de Cobertura
 on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_run:
     workflows: ["Build - Compilação TypeScript"]
     types: [completed]
@@ -52,7 +56,7 @@ jobs:
           pr_comments_enabled: true
 
       - name: Gerar sumário de coverage como comentário no PR
-        if: always() && github.event_name == 'pull_request'
+        if: always() && (github.event_name == 'pull_request' || github.event.workflow_run.pull_requests[0].number)
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -87,7 +91,8 @@ jobs:
               const lines = `${g.lineTotal > 0 ? ((g.lineCov / g.lineTotal) * 100).toFixed(0) : '0'}% (${g.lineCov}/${g.lineTotal})`;
               table += `| ${folder} | ${stmt} | ${branches} | ${functions} | ${lines} |\n`;
             });
-            await github.rest.issues.createComment({ issue_number: context.issue.number, owner: context.repo.owner, repo: context.repo.repo, body: table });
+            const issueNumber = github.event_name === 'pull_request' ? context.issue.number : github.event.workflow_run.pull_requests[0].number;
+            await github.rest.issues.createComment({ issue_number: issueNumber, owner: context.repo.owner, repo: context.repo.repo, body: table });
 
       - name: Verificar vulnerabilidades
         run: npm audit --audit-level=high
