@@ -59,27 +59,39 @@ jobs:
           script: |
             const fs = require('fs');
             const coverage = JSON.parse(fs.readFileSync('./coverage/coverage-final.json', 'utf8'));
-            let totalStmt = 0, covStmt = 0, totalLines = 0, covLines = 0, totalFunctions = 0, covFunctions = 0, totalBranches = 0, covBranches = 0;
-            const filesCoverage = [];
-            for (const file in coverage) {
-              if (!file.includes('middleware') && !file.includes('utils') && !file.includes('services')) continue;
-              const c = coverage[file];
-              let stmtTotal = 0, stmtCov = 0, lineTotal = 0, lineCov = 0, fnTotal = 0, fnCov = 0, brTotal = 0, brCov = 0;
-              if (c.statements) Object.values(c.statements).forEach(s => { stmtTotal++; totalStmt++; if (s > 0) { stmtCov++; covStmt++; } });
-              if (c.lines) Object.values(c.lines).forEach(l => { lineTotal++; totalLines++; if (l > 0) { lineCov++; covLines++; } });
-              if (c.functions) Object.values(c.functions).forEach(f => { fnTotal++; totalFunctions++; if (f > 0) { fnCov++; covFunctions++; } });
-              if (c.branches) Object.values(c.branches).forEach(b => { brTotal++; totalBranches++; if (b > 0) { brCov++; covBranches++; } });
-              const fname = file.replace(process.cwd() + '/', '').replace(/\\/g, '/');
-              const stmtPct = stmtTotal > 0 ? ((stmtCov / stmtTotal) * 100).toFixed(0) : '0';
-              const linePct = lineTotal > 0 ? ((lineCov / lineTotal) * 100).toFixed(0) : '0';
-              const fnPct = fnTotal > 0 ? ((fnCov / fnTotal) * 100).toFixed(0) : '0';
-              const brPct = brTotal > 0 ? ((brCov / brTotal) * 100).toFixed(0) : '0';
-              filesCoverage.push({ file: fname, statements: `${stmtPct}% (${stmtCov}/${stmtTotal})`, branches: `${brPct}% (${brCov}/${brTotal})`, functions: `${fnPct}% (${fnCov}/${fnTotal})`, lines: `${linePct}% (${lineCov}/${lineTotal})` });
+            const filesCoverage = {};
+            for (const filePath in coverage) {
+              if (!filePath.includes('middleware') && !filePath.includes('utils') && !filePath.includes('services')) continue;
+              const c = coverage[filePath];
+              const relPath = filePath.replace(/\\src\\/g, 'src/').replace(/\\\\/g, '/');
+              const fname = relPath.split('/src/')[1];
+              const stmtTotal = Object.keys(c.s).length;
+              const stmtCov = Object.values(c.s).filter(v => v > 0).length;
+              const fnTotal = Object.keys(c.f).length;
+              const fnCov = Object.values(c.f).filter(v => v > 0).length;
+              const brTotal = Object.values(c.b).reduce((t, arr) => t + arr.length, 0);
+              const brCov = Object.values(c.b).reduce((t, arr) => t + arr.filter(v => v > 0).length, 0);
+              const lineTotal = Object.keys(c.s).length;
+              const lineCov = Object.values(c.s).filter(v => v > 0).length;
+              filesCoverage[fname] = { statements: `${stmtTotal > 0 ? ((stmtCov / stmtTotal) * 100).toFixed(0) : '0'}% (${stmtCov}/${stmtTotal})`, branches: `${brTotal > 0 ? ((brCov / brTotal) * 100).toFixed(0) : '0'}% (${brCov}/${brTotal})`, functions: `${fnTotal > 0 ? ((fnCov / fnTotal) * 100).toFixed(0) : '0'}% (${fnCov}/${fnTotal})`, lines: `${lineTotal > 0 ? ((lineCov / lineTotal) * 100).toFixed(0) : '0'}% (${lineCov}/${lineTotal})` };
             }
-            let filesTable = '| Arquivo | Statements | Branches | Functions | Lines |\n|---------|------------|----------|-----------|-------|\n';
-            filesCoverage.sort((a, b) => a.file.localeCompare(b.file)).forEach(f => { filesTable += `| ${f.file} | ${f.statements} | ${f.branches} | ${f.functions} | ${f.lines} |\n`; });
-            const msg = `## 📊 Cobertura de Testes (Middlewares, Utils, Services)\n\n${filesTable}`;
-            await github.rest.issues.createComment({ issue_number: context.issue.number, owner: context.repo.owner, repo: context.repo.repo, body: msg });
+            const grouped = { services: [], middleware: [], utils: [] };
+            for (const file in filesCoverage) {
+              if (file.includes('services')) grouped.services.push([file, filesCoverage[file]]);
+              else if (file.includes('middleware')) grouped.middleware.push([file, filesCoverage[file]]);
+              else if (file.includes('utils')) grouped.utils.push([file, filesCoverage[file]]);
+            }
+            let table = '## 📊 Cobertura de Testes (Middlewares, Utils, Services)\n\n';
+            const order = ['services', 'middleware', 'utils'];
+            order.forEach(type => {
+              grouped[type].sort((a, b) => a[0].localeCompare(b[0]));
+              if (grouped[type].length > 0) {
+                table += `### ${type === 'services' ? '🔧 Services' : type === 'middleware' ? '🛣️ Middlewares' : '🧰 Utils'}\n\n| Arquivo | Statements | Branches | Functions | Lines |\n|---------|------------|----------|-----------|-------|\n`;
+                grouped[type].forEach(([f, c]) => { table += `| ${f} | ${c.statements} | ${c.branches} | ${c.functions} | ${c.lines} |\n`; });
+                table += '\n';
+              }
+            });
+            await github.rest.issues.createComment({ issue_number: context.issue.number, owner: context.repo.owner, repo: context.repo.repo, body: table });
 
       - name: Verificar vulnerabilidades
         run: npm audit --audit-level=high
