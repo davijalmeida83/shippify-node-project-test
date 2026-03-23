@@ -25,6 +25,30 @@ module.exports = {
       functions: 80,
       lines: 80,
     },
+    './src/modules/**/services/**/*.ts': {
+      statements: 80,
+      branches: 80,
+      functions: 80,
+      lines: 80,
+    },
+    './src/modules/**/utils/**/*.ts': {
+      statements: 80,
+      branches: 80,
+      functions: 80,
+      lines: 80,
+    },
+    './src/shared/middleware/**/*.ts': {
+      statements: 80,
+      branches: 80,
+      functions: 80,
+      lines: 80,
+    },
+    './src/shared/utils/**/*.ts': {
+      statements: 80,
+      branches: 80,
+      functions: 80,
+      lines: 80,
+    },
   },
   coveragePathIgnorePatterns: [
     '/node_modules/',
