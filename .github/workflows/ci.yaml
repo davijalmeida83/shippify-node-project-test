@@ -59,21 +59,25 @@ jobs:
           script: |
             const fs = require('fs');
             const coverage = JSON.parse(fs.readFileSync('./coverage/coverage-final.json', 'utf8'));
-            let totalLines = 0, coveredLines = 0, totalFunctions = 0, coveredFunctions = 0, totalBranches = 0, coveredBranches = 0;
+            let totalStmt = 0, covStmt = 0, totalLines = 0, covLines = 0, totalFunctions = 0, covFunctions = 0, totalBranches = 0, covBranches = 0;
             const filesCoverage = [];
             for (const file in coverage) {
               if (!file.includes('middleware') && !file.includes('utils') && !file.includes('services')) continue;
-              const fileCov = coverage[file];
-              let fileLines = 0, fileCoveredLines = 0, fileFunctions = 0, fileCoveredFunctions = 0, fileBranches = 0, fileCoveredBranches = 0;
-              if (fileCov.lines) Object.values(fileCov.lines).forEach(line => { fileLines++; totalLines++; if (line > 0) { fileCoveredLines++; coveredLines++; } });
-              if (fileCov.functions) Object.values(fileCov.functions).forEach(fn => { fileFunctions++; totalFunctions++; if (fn > 0) { fileCoveredFunctions++; coveredFunctions++; } });
-              if (fileCov.branches) Object.values(fileCov.branches).forEach(branch => { fileBranches++; totalBranches++; if (branch > 0) { fileCoveredBranches++; coveredBranches++; } });
+              const c = coverage[file];
+              let stmtTotal = 0, stmtCov = 0, lineTotal = 0, lineCov = 0, fnTotal = 0, fnCov = 0, brTotal = 0, brCov = 0;
+              if (c.statements) Object.values(c.statements).forEach(s => { stmtTotal++; totalStmt++; if (s > 0) { stmtCov++; covStmt++; } });
+              if (c.lines) Object.values(c.lines).forEach(l => { lineTotal++; totalLines++; if (l > 0) { lineCov++; covLines++; } });
+              if (c.functions) Object.values(c.functions).forEach(f => { fnTotal++; totalFunctions++; if (f > 0) { fnCov++; covFunctions++; } });
+              if (c.branches) Object.values(c.branches).forEach(b => { brTotal++; totalBranches++; if (b > 0) { brCov++; covBranches++; } });
               const fname = file.replace(process.cwd() + '/', '').replace(/\\/g, '/');
-              const linePct = fileLines > 0 ? ((fileCoveredLines / fileLines) * 100).toFixed(0) : '0';
-              filesCoverage.push({ file: fname, lines: `${linePct}% (${fileCoveredLines}/${fileLines})`, functions: `${fileFunctions > 0 ? ((fileCoveredFunctions / fileFunctions) * 100).toFixed(0) : '0'}%`, branches: `${fileBranches > 0 ? ((fileCoveredBranches / fileBranches) * 100).toFixed(0) : '0'}%` });
+              const stmtPct = stmtTotal > 0 ? ((stmtCov / stmtTotal) * 100).toFixed(0) : '0';
+              const linePct = lineTotal > 0 ? ((lineCov / lineTotal) * 100).toFixed(0) : '0';
+              const fnPct = fnTotal > 0 ? ((fnCov / fnTotal) * 100).toFixed(0) : '0';
+              const brPct = brTotal > 0 ? ((brCov / brTotal) * 100).toFixed(0) : '0';
+              filesCoverage.push({ file: fname, statements: `${stmtPct}% (${stmtCov}/${stmtTotal})`, branches: `${brPct}% (${brCov}/${brTotal})`, functions: `${fnPct}% (${fnCov}/${fnTotal})`, lines: `${linePct}% (${lineCov}/${lineTotal})` });
             }
-            let filesTable = '| Arquivo | Linhas | Funções | Ramos |\n|---------|--------|---------|-------|\n';
-            filesCoverage.sort((a, b) => a.file.localeCompare(b.file)).forEach(f => { filesTable += `| ${f.file} | ${f.lines} | ${f.functions} | ${f.branches} |\n`; });
+            let filesTable = '| Arquivo | Statements | Branches | Functions | Lines |\n|---------|------------|----------|-----------|-------|\n';
+            filesCoverage.sort((a, b) => a.file.localeCompare(b.file)).forEach(f => { filesTable += `| ${f.file} | ${f.statements} | ${f.branches} | ${f.functions} | ${f.lines} |\n`; });
             const msg = `## 📊 Cobertura de Testes (Middlewares, Utils, Services)\n\n${filesTable}`;
             await github.rest.issues.createComment({ issue_number: context.issue.number, owner: context.repo.owner, repo: context.repo.repo, body: msg });
 
