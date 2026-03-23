@@ -1,0 +1,31 @@
+name: CI - Testes Automatizados
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Configurar Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14"
+      - name: Instalar dependências
+        run: npm install
+      - name: Executar testes
+        run: npm test
+      - name: Gerar relatório de cobertura
+        run: npm run test:coverage
+      - name: Publicar relatório de cobertura
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: true
+      - name: Verificar vulnerabilidades
+        run: npm audit --audit-level=high
