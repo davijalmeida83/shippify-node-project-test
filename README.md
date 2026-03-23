@@ -719,6 +719,121 @@ Para que o Coverage funcione e comente no PR, configure:
    - No PR, clique em "Checks" para ver status
    - Coverage comenta automaticamente no PR com resumo
 
+## Protecao de Branch e Code Review
+
+### GitHub Rulesets (Branch Protection)
+
+A branch `main` é protegida por GitHub Rulesets que garantem qualidade e segurança:
+
+#### Regras Ativas:
+
+✅ **Require a pull request before merging**
+
+- Obriga criacao de PR para fazer merge
+- Requer aprovacao de Code Owner (@davijalmeida83)
+- PR authors nao conseguem aprovar seu proprio PR
+
+✅ **Require status checks to pass before merging**
+
+- Build workflow deve passar
+- Coverage workflow deve passar
+- Testes devem rodar com sucesso
+
+✅ **Require branches to be up to date before merging**
+
+- PR deve estar sincronizada com main antes do merge
+- Evita conflitos no merge
+
+✅ **Require conversation resolution before merging**
+
+- Comentarios no PR devem ser resolvidos
+- Garante que feedback foi considerado
+
+### CODEOWNERS - Code Review Obrigatorio
+
+O arquivo `.github/CODEOWNERS` define quem deve revisar as mudancas:
+
+```
+# Todos os arquivos requerem aprovacao de:
+* @davijalmeida83
+
+# Workflows de CI/CD - requerem revisao extra
+.github/workflows/* @davijalmeida83
+
+# Configuracoes criticas
+tsconfig.json @davijalmeida83
+jest.config.js @davijalmeida83
+package.json @davijalmeida83
+```
+
+**Resultado**: Qualquer PR precisa de aprovacao do owner antes de fazer merge!
+
+### Workflow de Desenvolvimento com Seguranca
+
+#### Passo 1: Crie uma branch
+
+```bash
+git checkout -b feat/sua-feature
+```
+
+#### Passo 2: Faça suas mudancas
+
+```bash
+# Edite arquivos, faça commits
+git add .
+git commit -m "feat: descricao da mudanca"
+```
+
+#### Passo 3: Push para remota
+
+```bash
+git push origin feat/sua-feature
+```
+
+#### Passo 4: Abra um PR
+
+- Vá para GitHub
+- Clique em "Compare & pull request"
+- Preencha titulo e descricao
+
+#### Passo 5: Aguarde Workflows
+
+- Build workflow executa (compilacao)
+- Coverage workflow executa (testes + cobertura)
+- Se ambos passarem, um comentario com resumo aparece
+
+#### Passo 6: Code Review
+
+- Owner (ou Code Owner) revisa o PR
+- Se OK, aprova
+
+#### Passo 7: Merge
+
+- Clique "Squash and merge" ou "Merge pull request"
+- PR é mergeado automaticamente na main
+
+#### Passo 8: Sincronize local
+
+```bash
+git checkout main
+git pull origin main
+```
+
+### Restricoes de Push Direto
+
+**IMPORTANTE**: Nao e possivel fazer push direto na branch main:
+
+```bash
+git push origin main
+# ERROR: Pushing to this branch requires pull request and review
+```
+
+Isso garante que TODAS as mudancas passem por:
+
+1. Compilacao (build workflow)
+2. Testes (coverage workflow)
+3. Code review (aprovacao)
+
 ## Logging
 
 A API implementa logging estruturado em todos os pontos críticos:
