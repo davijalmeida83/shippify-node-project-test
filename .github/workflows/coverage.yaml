@@ -3,7 +3,6 @@ on:
   workflow_run:
     workflows: ["Build - Compilação TypeScript"]
     types: [completed]
-    branches: [main]
 
 permissions:
   contents: read
