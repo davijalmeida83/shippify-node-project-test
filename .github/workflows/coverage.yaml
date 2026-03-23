@@ -1,0 +1,110 @@
+name: Coverage - Relatório de Cobertura
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Configurar Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+      - name: Instalar dependências
+        run: npm install --legacy-peer-deps
+      - name: Executar testes
+        run: npm test
+      - name: Gerar relatório de cobertura
+        run: npm run test:coverage
+      - name: Verificar arquivo de cobertura
+        run: |
+          if [ -f ./coverage/lcov.info ]; then
+            echo "✅ Arquivo lcov.info encontrado"
+            ls -lh ./coverage/
+          else
+            echo "❌ Arquivo lcov.info NÃO encontrado"
+            find . -name "lcov.info" -o -name "coverage-final.json"
+            exit 1
+          fi
+      - name: Publicar relatório de cobertura
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+          verbose: true
+          dry_run: false
+          comment: true
+          comment_mode: "always"
+          pr_comments_enabled: true
+
+      - name: Gerar sumário de coverage como comentário no PR
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const coverage = JSON.parse(fs.readFileSync('./coverage/coverage-final.json', 'utf8'));
+            const grouped = {};
+            for (const filePath in coverage) {
+              if (!filePath.includes('middleware') && !filePath.includes('utils') && !filePath.includes('services')) continue;
+              const c = coverage[filePath];
+              const relPath = filePath.replace(/\\/g, '/').split('/src/')[1];
+              const folderMatch = relPath.match(/^(.+)\/(services|middleware|utils)\//);
+              const folder = folderMatch ? folderMatch[0].replace(/\/$/, '') : relPath.split('/')[0];
+              if (!grouped[folder]) grouped[folder] = { stmtCov: 0, stmtTotal: 0, fnCov: 0, fnTotal: 0, brCov: 0, brTotal: 0, lineCov: 0, lineTotal: 0 };
+              const stmtTotal = Object.keys(c.s).length;
+              const stmtCov = Object.values(c.s).filter(v => v > 0).length;
+              const fnTotal = Object.keys(c.f).length;
+              const fnCov = Object.values(c.f).filter(v => v > 0).length;
+              const brTotal = Object.values(c.b).reduce((t, arr) => t + arr.length, 0);
+              const brCov = Object.values(c.b).reduce((t, arr) => t + arr.filter(v => v > 0).length, 0);
+              grouped[folder].stmtCov += stmtCov; grouped[folder].stmtTotal += stmtTotal;
+              grouped[folder].fnCov += fnCov; grouped[folder].fnTotal += fnTotal;
+              grouped[folder].brCov += brCov; grouped[folder].brTotal += brTotal;
+              grouped[folder].lineCov += stmtCov; grouped[folder].lineTotal += stmtTotal;
+            }
+            let table = '## 📊 Cobertura de Testes (Middlewares, Utils, Services)\n\n| Arquivo | Statements | Branches | Functions | Lines |\n|---------|------------|----------|-----------|-------|\n';
+            Object.keys(grouped).sort().forEach(folder => {
+              const g = grouped[folder];
+              const stmt = `${g.stmtTotal > 0 ? ((g.stmtCov / g.stmtTotal) * 100).toFixed(0) : '0'}% (${g.stmtCov}/${g.stmtTotal})`;
+              const branches = `${g.brTotal > 0 ? ((g.brCov / g.brTotal) * 100).toFixed(0) : '0'}% (${g.brCov}/${g.brTotal})`;
+              const functions = `${g.fnTotal > 0 ? ((g.fnCov / g.fnTotal) * 100).toFixed(0) : '0'}% (${g.fnCov}/${g.fnTotal})`;
+              const lines = `${g.lineTotal > 0 ? ((g.lineCov / g.lineTotal) * 100).toFixed(0) : '0'}% (${g.lineCov}/${g.lineTotal})`;
+              table += `| ${folder} | ${stmt} | ${branches} | ${functions} | ${lines} |\n`;
+            });
+
+            try {
+              let issueNumber = null;
+              
+              if (github.event_name === 'pull_request' && context.issue && context.issue.number) {
+                issueNumber = context.issue.number;
+              } else if (github?.event?.workflow_run?.pull_requests?.[0]?.number) {
+                issueNumber = github.event.workflow_run.pull_requests[0].number;
+              }
+              
+              if (issueNumber) {
+                await github.rest.issues.createComment({ issue_number: issueNumber, owner: context.repo.owner, repo: context.repo.repo, body: table });
+                console.log(`✅ Comentário postado no PR #${issueNumber}`);
+              } else {
+                console.log(`ℹ️  Contexto: event_name=${github.event_name}, is_PR=${github.event_name === 'pull_request'}`);
+                console.log('⚠️  Não é possível postar comentário - não é um contexto de PR');
+              }
+            } catch (error) {
+              console.log('⚠️  Erro ao postar comentário:', error.message);
+            }
+
+      - name: Verificar vulnerabilidades
+        run: npm audit --audit-level=high
