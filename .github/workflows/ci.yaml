@@ -59,37 +59,33 @@ jobs:
           script: |
             const fs = require('fs');
             const coverage = JSON.parse(fs.readFileSync('./coverage/coverage-final.json', 'utf8'));
-            const filesCoverage = {};
+            const grouped = {};
             for (const filePath in coverage) {
               if (!filePath.includes('middleware') && !filePath.includes('utils') && !filePath.includes('services')) continue;
               const c = coverage[filePath];
-              const relPath = filePath.replace(/\\src\\/g, 'src/').replace(/\\\\/g, '/');
-              const fname = relPath.split('/src/')[1];
+              const relPath = filePath.replace(/\\/g, '/').split('/src/')[1];
+              const folderMatch = relPath.match(/^(.+)\/(services|middleware|utils)\//);
+              const folder = folderMatch ? folderMatch[0].replace(/\/$/, '') : relPath.split('/')[0];
+              if (!grouped[folder]) grouped[folder] = { stmtCov: 0, stmtTotal: 0, fnCov: 0, fnTotal: 0, brCov: 0, brTotal: 0, lineCov: 0, lineTotal: 0 };
               const stmtTotal = Object.keys(c.s).length;
               const stmtCov = Object.values(c.s).filter(v => v > 0).length;
               const fnTotal = Object.keys(c.f).length;
               const fnCov = Object.values(c.f).filter(v => v > 0).length;
               const brTotal = Object.values(c.b).reduce((t, arr) => t + arr.length, 0);
               const brCov = Object.values(c.b).reduce((t, arr) => t + arr.filter(v => v > 0).length, 0);
-              const lineTotal = Object.keys(c.s).length;
-              const lineCov = Object.values(c.s).filter(v => v > 0).length;
-              filesCoverage[fname] = { statements: `${stmtTotal > 0 ? ((stmtCov / stmtTotal) * 100).toFixed(0) : '0'}% (${stmtCov}/${stmtTotal})`, branches: `${brTotal > 0 ? ((brCov / brTotal) * 100).toFixed(0) : '0'}% (${brCov}/${brTotal})`, functions: `${fnTotal > 0 ? ((fnCov / fnTotal) * 100).toFixed(0) : '0'}% (${fnCov}/${fnTotal})`, lines: `${lineTotal > 0 ? ((lineCov / lineTotal) * 100).toFixed(0) : '0'}% (${lineCov}/${lineTotal})` };
+              grouped[folder].stmtCov += stmtCov; grouped[folder].stmtTotal += stmtTotal;
+              grouped[folder].fnCov += fnCov; grouped[folder].fnTotal += fnTotal;
+              grouped[folder].brCov += brCov; grouped[folder].brTotal += brTotal;
+              grouped[folder].lineCov += stmtCov; grouped[folder].lineTotal += stmtTotal;
             }
-            const grouped = { services: [], middleware: [], utils: [] };
-            for (const file in filesCoverage) {
-              if (file.includes('services')) grouped.services.push([file, filesCoverage[file]]);
-              else if (file.includes('middleware')) grouped.middleware.push([file, filesCoverage[file]]);
-              else if (file.includes('utils')) grouped.utils.push([file, filesCoverage[file]]);
-            }
-            let table = '## 📊 Cobertura de Testes (Middlewares, Utils, Services)\n\n';
-            const order = ['services', 'middleware', 'utils'];
-            order.forEach(type => {
-              grouped[type].sort((a, b) => a[0].localeCompare(b[0]));
-              if (grouped[type].length > 0) {
-                table += `### ${type === 'services' ? '🔧 Services' : type === 'middleware' ? '🛣️ Middlewares' : '🧰 Utils'}\n\n| Arquivo | Statements | Branches | Functions | Lines |\n|---------|------------|----------|-----------|-------|\n`;
-                grouped[type].forEach(([f, c]) => { table += `| ${f} | ${c.statements} | ${c.branches} | ${c.functions} | ${c.lines} |\n`; });
-                table += '\n';
-              }
+            let table = '## 📊 Cobertura de Testes (Middlewares, Utils, Services)\n\n| Arquivo | Statements | Branches | Functions | Lines |\n|---------|------------|----------|-----------|-------|\n';
+            Object.keys(grouped).sort().forEach(folder => {
+              const g = grouped[folder];
+              const stmt = `${g.stmtTotal > 0 ? ((g.stmtCov / g.stmtTotal) * 100).toFixed(0) : '0'}% (${g.stmtCov}/${g.stmtTotal})`;
+              const branches = `${g.brTotal > 0 ? ((g.brCov / g.brTotal) * 100).toFixed(0) : '0'}% (${g.brCov}/${g.brTotal})`;
+              const functions = `${g.fnTotal > 0 ? ((g.fnCov / g.fnTotal) * 100).toFixed(0) : '0'}% (${g.fnCov}/${g.fnTotal})`;
+              const lines = `${g.lineTotal > 0 ? ((g.lineCov / g.lineTotal) * 100).toFixed(0) : '0'}% (${g.lineCov}/${g.lineTotal})`;
+              table += `| ${folder} | ${stmt} | ${branches} | ${functions} | ${lines} |\n`;
             });
             await github.rest.issues.createComment({ issue_number: context.issue.number, owner: context.repo.owner, repo: context.repo.repo, body: table });
 
